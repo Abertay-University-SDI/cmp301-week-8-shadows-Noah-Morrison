@@ -23,8 +23,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowShader = new ShadowShader(renderer->getDevice(), hwnd);
 
 	// Variables for defining shadow map
-	int shadowmapWidth = 1024;
-	int shadowmapHeight = 1024;
+	int shadowmapWidth = 2048;
+	int shadowmapHeight = 2048;
 	int sceneWidth = 100;
 	int sceneHeight = 100;
 
@@ -37,8 +37,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setDirection(0.0f, -0.7f, 0.7f);
 	light->setPosition(0.f, 0.f, -10.f);
-	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
-
+	// light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	light->generateProjectionMatrix(0.1f, 100.f);
 }
 
 App1::~App1()
@@ -90,7 +90,8 @@ void App1::depthPass()
 	// get the world, view, and projection matrices from the camera and d3d objects.
 	light->generateViewMatrix();
 	XMMATRIX lightViewMatrix = light->getViewMatrix();
-	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
+	// XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
+	XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
