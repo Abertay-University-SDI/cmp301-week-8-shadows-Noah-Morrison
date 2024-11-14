@@ -1,8 +1,8 @@
 # CMP301_Shadows
 Starter project for CMP301. Shadow mapping.
 
-Name:
+Name: Noah Morrison
 
-Number:
+Number:2301413
 
-Outline of project:
+Outline of project: Multiple Shadow Maps
