@@ -13,9 +13,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
 
 	// Create Mesh object and shader object
-	mesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
+	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
+
+	// Create addition geometry objects
+	cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
+	sphereMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	// initial shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -23,8 +27,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowShader = new ShadowShader(renderer->getDevice(), hwnd);
 
 	// Variables for defining shadow map
-	int shadowmapWidth = 2048;
-	int shadowmapHeight = 2048;
+	int shadowmapWidth = 8192;
+	int shadowmapHeight = 8192;
 	int sceneWidth = 100;
 	int sceneHeight = 100;
 
@@ -32,7 +36,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Ortho mesh to view light POV
-	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), shadowmapWidth / 4, shadowmapHeight / 4, -screenWidth / 2.7, screenHeight / 2.7);
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), 512, 512, -screenWidth / 1.3, screenHeight / 1.8);
 
 	// Light render texture
 	lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
@@ -81,6 +85,16 @@ bool App1::frame()
 
 bool App1::render()
 {
+	// Get delta time
+	deltaTime = timer->getTime();
+
+	// Animate sphere by offsetting it back and forth on the X-axis
+	if ((cubeOffset + deltaTime) >= 20.f || (cubeOffset + deltaTime <= -20.f))
+	{
+		velocity = -velocity;
+	};
+
+	cubeOffset += deltaTime * velocity;
 
 	// Perform depth pass
 	depthPass();
@@ -105,9 +119,9 @@ void App1::depthPass()
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render floor
-	mesh->sendData(renderer->getDeviceContext());
+	planeMesh->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), mesh->getIndexCount());
+	depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	worldMatrix = renderer->getWorldMatrix();
 	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
@@ -117,6 +131,22 @@ void App1::depthPass()
 	model->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), model->getIndexCount());
+
+	// Add cube
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(cubeOffset, 7.f, 10.f);
+	// Render cube
+	cubeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+
+	// Add sphere
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(-20.f, 14.f, 5.f);
+	// Render sphere - TODO - Fix issue where shadow displays as an outline and not filled
+	sphereMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -136,10 +166,10 @@ void App1::finalPass()
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render floor
-	mesh->sendData(renderer->getDeviceContext());
+	planeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
 		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
-	shadowShader->render(renderer->getDeviceContext(), mesh->getIndexCount());
+	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render model
 	worldMatrix = renderer->getWorldMatrix();
@@ -147,8 +177,25 @@ void App1::finalPass()
 	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 	model->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
+		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
+
+	// Render cube
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(cubeOffset, 7.f, 10.f);
+	cubeMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
+		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+
+	// Render sphere
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(-20.f, 14.f, 5.f);
+	sphereMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Render light POV
 	renderer->setZBuffer(false);

@@ -26,7 +26,11 @@ protected:
 
 private:
 	TextureShader* textureShader;
-	PlaneMesh* mesh;
+	PlaneMesh* planeMesh;
+
+	// Additional geometry
+	CubeMesh* cubeMesh;
+	SphereMesh* sphereMesh;
 
 	OrthoMesh* orthoMesh;
 	RenderTexture* lightTexture;
@@ -37,6 +41,10 @@ private:
 	DepthShader* depthShader;
 
 	ShadowMap* shadowMap;
+
+	float deltaTime;
+	float cubeOffset = 0.0f;
+	float velocity = 5.0f;
 };
 
 #endif
