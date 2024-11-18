@@ -31,14 +31,22 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// This is your shadow map
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
+	// Ortho mesh to view light POV
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), shadowmapWidth / 4, shadowmapHeight / 4, -screenWidth / 2.7, screenHeight / 2.7);
+
+	// Light render texture
+	lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
+
 	// Configure directional light
 	light = new Light();
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setDirection(0.0f, -0.7f, 0.7f);
 	light->setPosition(0.f, 0.f, -10.f);
-	// light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
-	light->generateProjectionMatrix(0.1f, 100.f);
+	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+
+	// TODO - implement projection matrix to create frustum
+	//light->generateProjectionMatrix(0.1f, 100.f);
 }
 
 App1::~App1()
@@ -90,8 +98,9 @@ void App1::depthPass()
 	// get the world, view, and projection matrices from the camera and d3d objects.
 	light->generateViewMatrix();
 	XMMATRIX lightViewMatrix = light->getViewMatrix();
-	// XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
-	XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
+	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
+	// TODO - implement projection matrix to create frustum
+	//XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
@@ -140,6 +149,18 @@ void App1::finalPass()
 	model->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
+
+	// Render light POV
+	renderer->setZBuffer(false);
+
+	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
+	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
+
+	orthoMesh->sendData(renderer->getDeviceContext());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, shadowMap->getDepthMapSRV());
+	textureShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+
+	renderer->setZBuffer(true);
 
 	gui();
 	renderer->endScene();

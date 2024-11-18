@@ -28,6 +28,9 @@ private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
 
+	OrthoMesh* orthoMesh;
+	RenderTexture* lightTexture;
+
 	Light* light;
 	AModel* model;
 	ShadowShader* shadowShader;
