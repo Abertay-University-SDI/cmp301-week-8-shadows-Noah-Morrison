@@ -106,6 +106,9 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
 	XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
 	XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
+
+	// TODO - implement projection matrix to create frustum
+	//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
 	
 	// Lock the constant buffer so it can be written to.
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
@@ -125,7 +128,9 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	lightPtr->ambient = light->getAmbientColour();
 	lightPtr->diffuse = light->getDiffuseColour();
 	lightPtr->direction = light->getDirection();
-	lightPtr->padding = 0.f;
+	lightPtr->padding1 = 0.f;
+	lightPtr->position = light->getPosition();
+	lightPtr->padding2 = 0.0f;
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 

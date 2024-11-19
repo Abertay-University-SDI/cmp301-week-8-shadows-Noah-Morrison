@@ -30,7 +30,7 @@ private:
 
 	// Additional geometry
 	CubeMesh* cubeMesh;
-	SphereMesh* sphereMesh;
+	TriangleMesh* triangleMesh;
 
 	OrthoMesh* orthoMesh;
 	RenderTexture* lightTexture;
@@ -45,6 +45,9 @@ private:
 	float deltaTime;
 	float cubeOffset = 0.0f;
 	float velocity = 5.0f;
+
+	// Add directional light controls
+	float lightDirection[3] = { 0.0f, -0.7f, 0.7f };
 };
 
 #endif

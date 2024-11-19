@@ -19,7 +19,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	// Create addition geometry objects
 	cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
-	sphereMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	triangleMesh = new TriangleMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	// initial shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -45,7 +45,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light = new Light();
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-	light->setDirection(0.0f, -0.7f, 0.7f);
+	light->setDirection(lightDirection[0], lightDirection[1], lightDirection[2]);
 	light->setPosition(0.f, 0.f, -10.f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
@@ -96,6 +96,8 @@ bool App1::render()
 
 	cubeOffset += deltaTime * velocity;
 
+	light->setDirection(lightDirection[0], lightDirection[1], lightDirection[2]);
+
 	// Perform depth pass
 	depthPass();
 	// Render scene
@@ -140,13 +142,13 @@ void App1::depthPass()
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
-	// Add sphere
+	// Add triangle
 	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-20.f, 14.f, 5.f);
-	// Render sphere - TODO - Fix issue where shadow displays as an outline and not filled
-	sphereMesh->sendData(renderer->getDeviceContext());
+	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
+	// Render triangle - TODO - Fix issue where shadow displays as an outline and not filled - May be a light and not model error
+	triangleMesh->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+	depthShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -189,15 +191,15 @@ void App1::finalPass()
 		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
-	// Render sphere
+	// Render triangle
 	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-20.f, 14.f, 5.f);
-	sphereMesh->sendData(renderer->getDeviceContext());
+	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
+	triangleMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
 		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
-	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+	shadowShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
 
-	// Render light POV
+	// Render light POV - TODO - Why isn't this working anymore?
 	renderer->setZBuffer(false);
 
 	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
@@ -225,6 +227,14 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+
+	// Directional Light Controls
+	if (ImGui::CollapsingHeader("Light Direction")) {
+		ImGui::Text("Position Values:");
+		ImGui::SliderFloat("X##Direction", &lightDirection[0], -1.0f, 1.0f);
+		ImGui::SliderFloat("Y##Direction", &lightDirection[1], -1.0f, 1.0f);
+		ImGui::SliderFloat("Z##Direction", &lightDirection[2], -1.0f, 1.0f);
+	}
 
 	// Render UI
 	ImGui::Render();
