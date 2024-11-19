@@ -24,6 +24,7 @@ struct InputType
 // Calculate lighting intensity based on direction and normal. Combine with light colour.
 float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
 {
+    
     float intensity = saturate(dot(normal, lightDirection));
     float4 colour = saturate(diffuse * intensity);
     return colour;

@@ -14,7 +14,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	// Create Mesh object and shader object
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
-	model = new AModel(renderer->getDevice(), "res/teapot.obj");
+	//model = new AModel(renderer->getDevice(), "res/teapot.obj");
+	model = new AModel(renderer->getDevice(), "res/lamppost/Lamppost.obj");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 
 	// Create addition geometry objects
