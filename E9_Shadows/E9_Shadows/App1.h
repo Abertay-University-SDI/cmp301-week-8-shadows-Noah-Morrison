@@ -53,7 +53,9 @@ private:
 	XMFLOAT3 lightAngle = { 90.0f, -90.0f, 0.0f };
 	XMFLOAT3 lightDirection = { 1.0f, -1.0f, 0.0f };
 
-	float time = 0.0f;
+	int hours = 0;
+	int minutes = 0;
+	int delay = 0;
 };
 
 #endif

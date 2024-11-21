@@ -264,10 +264,27 @@ void App1::gui()
 	// Time
 	if (ImGui::CollapsingHeader("Time")) {
 		ImGui::Text("Time Values:");
-		ImGui::SliderFloat("Time##Direction", &time, 0.0f, 360.0f);
+		ImGui::SliderInt("Hours##Direction", &hours, 0, 24);
+		ImGui::SliderInt("Minutes##Direction", &minutes, 0, 60);
 
-		lightDirection.x = sin(time * 0.0174532f);
-		lightDirection.y = cos(time * 0.0174532f);
+		if (minutes == 60) {
+			minutes = 0;
+			delay += 1;
+		}
+
+		// Since target FPS is 60 frames delay should last for 500 milliseconds
+		// TODO - NOT RELIABLE - Should be using dt
+		if (delay == 30) {
+			delay = 0;
+			hours += 1;
+		}
+
+		if (hours == 24) {
+			hours = 0;
+		}
+		
+		lightDirection.x = sin(((static_cast<float>(hours) / (24.f / 360.f)) + (static_cast<float>(minutes) / ((24.f * 60.f) / 360.f))) * 0.0174532f);
+		lightDirection.y = cos(((static_cast<float>(hours) / (24.f / 360.f)) + (static_cast<float>(minutes) / ((24.f * 60.f) / 360.f))) * 0.0174532f);
 		lightDirection.z = sin(-90.0f * 0.0174532f);
 	}
 
