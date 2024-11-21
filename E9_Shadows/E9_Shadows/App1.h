@@ -24,6 +24,8 @@ protected:
 	void finalPass();
 	void gui();
 
+	void setAmbientAndDiffuse(Light* light, XMFLOAT3 ambient, XMFLOAT3 diffuse);
+
 private:
 	TextureShader* textureShader;
 	PlaneMesh* planeMesh;
@@ -31,6 +33,7 @@ private:
 	// Additional geometry
 	CubeMesh* cubeMesh;
 	TriangleMesh* triangleMesh;
+	SphereMesh* sphereMesh;
 
 	OrthoMesh* orthoMesh;
 	RenderTexture* lightTexture;
@@ -47,7 +50,10 @@ private:
 	float velocity = 5.0f;
 
 	// Add directional light controls
-	float lightDirection[3] = { 0.0f, -0.7f, 0.7f };
+	XMFLOAT3 lightAngle = { 90.0f, -90.0f, 0.0f };
+	XMFLOAT3 lightDirection = { 1.0f, -1.0f, 0.0f };
+
+	float time = 0.0f;
 };
 
 #endif

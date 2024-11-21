@@ -16,10 +16,12 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
+	textureMgr->loadTexture(L"checkerboard", L"res/checkerboard.png");
 
 	// Create addition geometry objects
 	cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	triangleMesh = new TriangleMesh(renderer->getDevice(), renderer->getDeviceContext());
+	sphereMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	// initial shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -29,25 +31,27 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Variables for defining shadow map
 	int shadowmapWidth = 8192;
 	int shadowmapHeight = 8192;
-	int sceneWidth = 100;
-	int sceneHeight = 100;
+	int sceneWidth = 200;
+	int sceneHeight = 200;
 
 	// This is your shadow map
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Ortho mesh to view light POV
-	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), 512, 512, -screenWidth / 1.3, screenHeight / 1.8);
+	//orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), 512, 512, -screenWidth / 1.3, screenHeight / 1.8);
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(),  200, 200, -screenWidth / 2.7, screenHeight / 2.7);
 
 	// Light render texture
-	lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
+	//lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
 
 	// Configure directional light
 	light = new Light();
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-	light->setDirection(lightDirection[0], lightDirection[1], lightDirection[2]);
-	light->setPosition(0.f, 0.f, -10.f);
+	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
+	light->setPosition(-lightDirection.x * 10.f, -lightDirection.y * 10.f, -lightDirection.z * 10.f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+
 
 	// TODO - implement projection matrix to create frustum
 	//light->generateProjectionMatrix(0.1f, 100.f);
@@ -96,7 +100,8 @@ bool App1::render()
 
 	cubeOffset += deltaTime * velocity;
 
-	light->setDirection(lightDirection[0], lightDirection[1], lightDirection[2]);
+	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
+	light->setPosition(-lightDirection.x * 30.f, -lightDirection.y * 30.f, -lightDirection.z * 30.f);
 
 	// Perform depth pass
 	depthPass();
@@ -199,9 +204,20 @@ void App1::finalPass()
 		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
 
+	// Render sphere (light position)
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(-lightDirection.x * 30.f , -lightDirection.y * 30.f, -lightDirection.z * 30.f);
+	sphereMesh->sendData(renderer->getDeviceContext());
+	setAmbientAndDiffuse(light, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f });
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+		textureMgr->getTexture(L"checkerboard"), shadowMap->getDepthMapSRV(), light);
+	setAmbientAndDiffuse(light, { 0.3f, 0.3f, 0.3f }, { 1.0f, 1.0f, 1.0f });
+	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+
 	// Render light POV - TODO - Why isn't this working anymore?
 	renderer->setZBuffer(false);
 
+	worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
 	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
 
@@ -230,14 +246,39 @@ void App1::gui()
 
 	// Directional Light Controls
 	if (ImGui::CollapsingHeader("Light Direction")) {
-		ImGui::Text("Position Values:");
-		ImGui::SliderFloat("X##Direction", &lightDirection[0], -1.0f, 1.0f);
-		ImGui::SliderFloat("Y##Direction", &lightDirection[1], -1.0f, 1.0f);
-		ImGui::SliderFloat("Z##Direction", &lightDirection[2], -1.0f, 1.0f);
+		ImGui::Text("Angle Values:");
+		ImGui::SliderFloat("X##Direction", &lightAngle.x, -90.0f, 90.0f);
+		ImGui::SliderFloat("Y##Direction", &lightAngle.y, -90.0f, 90.0f);
+		ImGui::SliderFloat("Z##Direction", &lightAngle.z, -90.0f, 90.0f);
+
+		// Don't all to equal zero simultaneously
+		if (abs(lightAngle.x) + abs(lightAngle.y) + abs(lightAngle.z) == 0.0f) {
+			lightAngle.x = 1.0f;
+		}
+
+		lightDirection.x = sin(lightAngle.x * 0.0174532f);
+		lightDirection.y = sin(lightAngle.y * 0.0174532f);
+		lightDirection.z = sin(lightAngle.z * 0.0174532f);
+	}
+
+	// Time
+	if (ImGui::CollapsingHeader("Time")) {
+		ImGui::Text("Time Values:");
+		ImGui::SliderFloat("Time##Direction", &time, 0.0f, 360.0f);
+
+		lightDirection.x = sin(time * 0.0174532f);
+		lightDirection.y = cos(time * 0.0174532f);
+		lightDirection.z = sin(-90.0f * 0.0174532f);
 	}
 
 	// Render UI
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+void App1::setAmbientAndDiffuse(Light* light, XMFLOAT3 ambient, XMFLOAT3 diffuse)
+{
+	light->setAmbientColour(ambient.x, ambient.y, ambient.z, 1.0f);
+	light->setDiffuseColour(diffuse.x, diffuse.y, diffuse.z, 1.0f);
 }
 
