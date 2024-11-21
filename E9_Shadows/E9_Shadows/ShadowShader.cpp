@@ -94,7 +94,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, Light* light)
+void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS])
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -104,8 +104,6 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
-	XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-	XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
 
 	// TODO - implement projection matrix to create frustum
 	//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
@@ -116,8 +114,16 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	dataPtr->world = tworld;// worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = tLightViewMatrix;
-	dataPtr->lightProjection = tLightProjectionMatrix;
+
+	for (int i = 0; i < NUM_LIGHTS; i++) 
+	{
+		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
+		XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
+
+		dataPtr->lightMatrices[i].lightView = tLightViewMatrix;
+		dataPtr->lightMatrices[i].lightProjection = tLightProjectionMatrix;
+	}
+
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -125,18 +131,36 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	// Send light data to pixel shader
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->direction = light->getDirection();
-	lightPtr->padding1 = 0.f;
-	lightPtr->position = light->getPosition();
-	lightPtr->padding2 = 0.0f;
+
+	//// Old
+	//lightPtr->ambient = light->getAmbientColour();
+	//lightPtr->diffuse = light->getDiffuseColour();
+	//lightPtr->direction = light->getDirection();
+	//lightPtr->padding1 = 0.f;
+	//lightPtr->position = light->getPosition();
+	//lightPtr->padding2 = 0.0f;
+	//deviceContext->Unmap(lightBuffer, 0);
+	//deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
+
+	// New
+	lightPtr->ambient = ambient;
+
+	// Prep light data
+	for (int i = 0; i < NUM_LIGHTS; i++)
+	{
+		lightPtr->lights[i].diffuse = lights[i]->getDiffuseColour();
+		lightPtr->lights[i].position = lights[i]->getPosition();
+		lightPtr->lights[i].padding1 = 0.0f;
+		lightPtr->lights[i].direction = lights[i]->getDirection();
+	}
+
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
-	deviceContext->PSSetShaderResources(1, 1, &depthMap);
+	deviceContext->PSSetShaderResources(1, NUM_LIGHTS, depthMaps);
+
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
 }

@@ -14,7 +14,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	// Create Mesh object and shader object
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
-	model = new AModel(renderer->getDevice(), "res/teapot.obj");
+	model = new AModel(renderer->getDevice(), "res/wheat.obj");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 	textureMgr->loadTexture(L"checkerboard", L"res/checkerboard.png");
 
@@ -35,7 +35,10 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	int sceneHeight = 200;
 
 	// This is your shadow map
-	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
+	//shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
+
+	shadowMaps[0] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
+	shadowMaps[1] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Ortho mesh to view light POV
 	//orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), 512, 512, -screenWidth / 1.3, screenHeight / 1.8);
@@ -51,6 +54,18 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
 	light->setPosition(-lightDirection.x * 10.f, -lightDirection.y * 10.f, -lightDirection.z * 10.f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+
+	lights[0] = new Light();
+	lights[0]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[0]->setDirection(1.0f, -1.0f, 0.0f);
+	lights[0]->setPosition(-30.0f, 30.0f, 0.0f);
+	lights[0]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+
+	lights[1] = new Light();
+	lights[1]->setDiffuseColour(0.0f, 1.0f, 0.0f, 1.0f);
+	lights[1]->setDirection(-1.0f, -1.0f, 0.0f);
+	lights[1]->setPosition(30.0f, 30.0f, 0.0f);
+	lights[1]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
 
 	// TODO - implement projection matrix to create frustum
@@ -103,23 +118,26 @@ bool App1::render()
 	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
 	light->setPosition(-lightDirection.x * 30.f, -lightDirection.y * 30.f, -lightDirection.z * 30.f);
 
-	// Perform depth pass
-	depthPass();
+	// Perform depth passes
+	for (int i = 0; i < NUM_LIGHTS; i++)
+	{
+		depthPass(i);
+	}
 	// Render scene
 	finalPass();
 
 	return true;
 }
 
-void App1::depthPass()
+void App1::depthPass(int index)
 {
 	// Set the render target to be the render to texture.
-	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
+	shadowMaps[index]->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 	// get the world, view, and projection matrices from the camera and d3d objects.
-	light->generateViewMatrix();
-	XMMATRIX lightViewMatrix = light->getViewMatrix();
-	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
+	lights[index]->generateViewMatrix();
+	XMMATRIX lightViewMatrix = lights[index]->getViewMatrix();
+	XMMATRIX lightProjectionMatrix = lights[index]->getOrthoMatrix();
 	// TODO - implement projection matrix to create frustum
 	//XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
@@ -166,16 +184,24 @@ void App1::finalPass()
 	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
 	camera->update();
 
+	// Set ambient colour (light grey)
+	ambient = { 0.3f, 0.3f, 0.3f, 1.0f };
+
 	// get the world, view, projection, and ortho matrices from the camera and Direct3D objects.
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 
+	for (int i = 0; i < NUM_LIGHTS; i++)
+	{
+		depthMaps[i] = shadowMaps[i]->getDepthMapSRV();
+	}
+
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render floor
 	planeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
 	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render model
@@ -185,7 +211,7 @@ void App1::finalPass()
 	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 	model->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube
@@ -193,7 +219,7 @@ void App1::finalPass()
 	worldMatrix = XMMatrixTranslation(cubeOffset, 7.f, 10.f);
 	cubeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
 	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
 	// Render triangle
@@ -201,18 +227,18 @@ void App1::finalPass()
 	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
 	triangleMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
 	shadowShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
 
-	// Render sphere (light position)
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-lightDirection.x * 30.f , -lightDirection.y * 30.f, -lightDirection.z * 30.f);
-	sphereMesh->sendData(renderer->getDeviceContext());
-	setAmbientAndDiffuse(light, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f });
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"checkerboard"), shadowMap->getDepthMapSRV(), light);
-	setAmbientAndDiffuse(light, { 0.3f, 0.3f, 0.3f }, { 1.0f, 1.0f, 1.0f });
-	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+	// Render sphere (light position) // TODO - Add back after multiple lights and shadow maps implemented
+	//worldMatrix = renderer->getWorldMatrix();
+	//worldMatrix = XMMatrixTranslation(-lightDirection.x * 30.f , -lightDirection.y * 30.f, -lightDirection.z * 30.f);
+	//sphereMesh->sendData(renderer->getDeviceContext());
+	//setAmbientAndDiffuse(light, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f });
+	//shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+	//	textureMgr->getTexture(L"checkerboard"), shadowMap->getDepthMapSRV(), light);
+	//setAmbientAndDiffuse(light, { 0.3f, 0.3f, 0.3f }, { 1.0f, 1.0f, 1.0f });
+	//shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Render light POV - TODO - Why isn't this working anymore?
 	renderer->setZBuffer(false);
@@ -222,7 +248,7 @@ void App1::finalPass()
 	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
 
 	orthoMesh->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, shadowMap->getDepthMapSRV());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, depthMaps[0]);
 	textureShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
 
 	renderer->setZBuffer(true);

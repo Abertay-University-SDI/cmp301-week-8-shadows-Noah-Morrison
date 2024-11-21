@@ -20,7 +20,7 @@ public:
 
 protected:
 	bool render();
-	void depthPass();
+	void depthPass(int index);
 	void finalPass();
 	void gui();
 
@@ -43,7 +43,9 @@ private:
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 
-	ShadowMap* shadowMap;
+	//ShadowMap* shadowMap;
+	ShadowMap* shadowMaps[NUM_LIGHTS];
+	ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS];
 
 	float deltaTime;
 	float cubeOffset = 0.0f;
@@ -56,6 +58,9 @@ private:
 	int hours = 0;
 	int minutes = 0;
 	int delay = 0;
+
+	XMFLOAT4 ambient;
+	Light* lights[NUM_LIGHTS];
 };
 
 #endif

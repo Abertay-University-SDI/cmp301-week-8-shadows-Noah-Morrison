@@ -1,11 +1,20 @@
+// Define number of lights
+#define NUM_LIGHTS 2
+
+struct LightMatrices
+{
+    matrix lightViewMatrix;
+    matrix lightProjectionMatrix;
+};
+
 
 cbuffer MatrixBuffer : register(b0)
 {
 	matrix worldMatrix;
 	matrix viewMatrix;
 	matrix projectionMatrix;
-	matrix lightViewMatrix;
-	matrix lightProjectionMatrix;
+	
+    LightMatrices lightMatrices[NUM_LIGHTS];
 };
 
 struct InputType
@@ -20,7 +29,7 @@ struct OutputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
 	float3 normal : NORMAL;
-    float4 lightViewPos : TEXCOORD1;
+    float4 lightViewPos[NUM_LIGHTS] : TEXCOORD1;
 };
 
 
@@ -33,10 +42,13 @@ OutputType main(InputType input)
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
     
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
 	// Calculate the position of the vertice as viewed by the light source.
-    output.lightViewPos = mul(input.position, worldMatrix);
-    output.lightViewPos = mul(output.lightViewPos, lightViewMatrix);
-    output.lightViewPos = mul(output.lightViewPos, lightProjectionMatrix);
+        output.lightViewPos[i] = mul(input.position, worldMatrix);
+        output.lightViewPos[i] = mul(output.lightViewPos[i], lightMatrices[i].lightViewMatrix);
+        output.lightViewPos[i] = mul(output.lightViewPos[i], lightMatrices[i].lightProjectionMatrix);
+    }
 
     output.tex = input.tex;
     output.normal = mul(input.normal, (float3x3)worldMatrix);
