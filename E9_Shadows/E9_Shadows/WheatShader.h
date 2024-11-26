@@ -1,8 +1,9 @@
 #pragma once
 
 #include "BaseShader.h"
+#include <vector>
 
-#define NUM_WHEAT_CLUMPS 9
+#define NUM_WHEAT_CLUMPS 3
 
 using namespace std;
 using namespace DirectX;
@@ -18,22 +19,25 @@ private:
 		XMFLOAT4 rotation;
 	};
 
-	struct InstanceBufferType {
-		InstanceData instanceData[NUM_WHEAT_CLUMPS];
-	};
-
 public:
 	WheatShader(ID3D11Device* device, HWND hwnd);
 	~WheatShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection, ID3D11ShaderResourceView* texture, InstanceData* instanceData[NUM_WHEAT_CLUMPS]);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection,
+							ID3D11ShaderResourceView* texture, 
+							XMFLOAT3 positions[NUM_WHEAT_CLUMPS], XMFLOAT3 scales[NUM_WHEAT_CLUMPS], XMFLOAT4 rotations[NUM_WHEAT_CLUMPS]);
+	void render(ID3D11DeviceContext* deviceContext, int indexCount, int instanceCount);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
 
 private:
 	ID3D11Buffer* matrixBuffer;
+	ID3D11Buffer* instanceBuffer;
+	ID3D11ShaderResourceView* instanceBufferSRV;
 	ID3D11SamplerState* sampleState;
+
+	vector<InstanceData> instances;
 };
 
 

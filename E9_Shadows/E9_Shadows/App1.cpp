@@ -1,5 +1,3 @@
-// Lab1.cpp
-// Lab 1 example, simple coloured triangle mesh
 #include "App1.h"
 
 App1::App1()
@@ -15,6 +13,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Create Mesh object and shader object
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	model = new AModel(renderer->getDevice(), "res/wheat.obj");
+	textureMgr->loadTexture(L"wheat", L"res/wheat.png");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 	textureMgr->loadTexture(L"checkerboard", L"res/checkerboard.png");
 
@@ -23,10 +22,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	triangleMesh = new TriangleMesh(renderer->getDevice(), renderer->getDeviceContext());
 	sphereMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
-	// initial shaders
+	// Initialise shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
 	depthShader = new DepthShader(renderer->getDevice(), hwnd);
 	shadowShader = new ShadowShader(renderer->getDevice(), hwnd);
+
+	// Instance (Wheat) Shader
+	wheatShader = new WheatShader(renderer->getDevice(), hwnd);
 
 	// Variables for defining shadow map
 	int shadowmapWidth = 8192;
@@ -240,7 +242,33 @@ void App1::finalPass()
 	//setAmbientAndDiffuse(light, { 0.3f, 0.3f, 0.3f }, { 1.0f, 1.0f, 1.0f });
 	//shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
-	// Render light POV - TODO - Why isn't this working anymore?
+
+	XMFLOAT3 wheatPositions[NUM_WHEAT_CLUMPS] = {
+		XMFLOAT3(10.0f, 0.0f, 5.0f),
+		XMFLOAT3(15.0f, 0.0f, 10.0f),
+		XMFLOAT3(20.0f, 0.0f, 15.0f)
+	};
+
+	XMFLOAT3 wheatScales[NUM_WHEAT_CLUMPS] = {
+		XMFLOAT3(1.0f, 1.0f, 1.0f),
+		XMFLOAT3(1.0f, 1.0f, 1.0f),
+		XMFLOAT3(1.0f, 1.0f, 1.0f)
+	};
+
+	XMFLOAT4 wheatRotations[NUM_WHEAT_CLUMPS] = {
+		XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+		XMFLOAT4(0.707f, 0.0f, 0.707f, 0.0f),
+		XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f)
+	};
+
+
+	// Render Wheat Instances
+	worldMatrix = renderer->getWorldMatrix();
+	model->sendData(renderer->getDeviceContext());
+	//wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"), wheatPositions, wheatScales, wheatRotations);
+	//wheatShader->render(renderer->getDeviceContext(), model->getIndexCount(), NUM_WHEAT_CLUMPS);
+
+	// Render light POV
 	renderer->setZBuffer(false);
 
 	worldMatrix = renderer->getWorldMatrix();
@@ -269,6 +297,9 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+
+	// Instance Count Controls
+	ImGui::SliderInt("Instance Count", &instanceCount, 1, 10);
 
 	// Directional Light Controls
 	if (ImGui::CollapsingHeader("Light Direction")) {

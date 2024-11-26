@@ -21,6 +21,13 @@ WheatShader::~WheatShader()
 		matrixBuffer = 0;
 	}
 
+	// Release the instance buffer
+	if (instanceBuffer)
+	{
+		instanceBuffer->Release();
+		instanceBuffer = 0;
+	}
+
 	// Release the layout.
 	if (layout)
 	{
@@ -36,6 +43,7 @@ WheatShader::~WheatShader()
 void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
+	D3D11_BUFFER_DESC instanceBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 
 	// Load (+ compile) shader files
@@ -52,6 +60,30 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
+
+
+	// Setup the description of the dynamic instance constant buffer that is in the vertex shader.
+	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	instanceBufferDesc.ByteWidth = sizeof(InstanceData) * NUM_WHEAT_CLUMPS;
+	instanceBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	instanceBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	instanceBufferDesc.StructureByteStride = sizeof(InstanceData);
+
+	//D3D11_SUBRESOURCE_DATA initData = {}; - TODO
+	//initData.pSysMem = instances.data(); - TODO
+
+	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
+	//renderer->CreateBuffer(&instanceBufferDesc, &initData, &instanceBuffer); - TODO
+	renderer->CreateBuffer(&instanceBufferDesc, nullptr , &instanceBuffer);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	//srvDesc.Buffer.ElementWidth = instances.size(); - TODO
+	srvDesc.Buffer.ElementWidth = sizeof(InstanceData) * NUM_WHEAT_CLUMPS;
+
+	renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -70,12 +102,13 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 }
 
 
-void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, InstanceData* instanceData[NUM_WHEAT_CLUMPS])
+void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, 
+									ID3D11ShaderResourceView* texture,
+									XMFLOAT3 positions[NUM_WHEAT_CLUMPS], XMFLOAT3 scales[NUM_WHEAT_CLUMPS], XMFLOAT4 rotations[NUM_WHEAT_CLUMPS])
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
-	InstanceBufferType* instancePtr;
 	XMMATRIX tworld, tview, tproj;
 
 	// Transpose the matrices to prepare them for the shader.
@@ -92,9 +125,25 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
+
 	// Send instance data
-	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	instancePtr = (InstanceBufferType*)mappedResource.pData;
+	for (size_t i = 0; i < NUM_WHEAT_CLUMPS; ++i) {
+		InstanceData instance;
+		instance.position = positions[i];
+		instance.scale = scales[i];
+		instance.rotation = rotations[i];
+
+		instance.padding0 = 0.0f;
+		instance.padding1 = 0.0f;
+		
+		instances.push_back(instance);
+	}
+
+	deviceContext->Map(instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	memcpy(mappedResource.pData, instances.data(), sizeof(InstanceData) * instances.size());
+	deviceContext->Unmap(instanceBuffer, 0);
+
+	deviceContext->VSSetShaderResources(0, 1, &instanceBufferSRV);
 
 
 	// Set shader texture and sampler resource in the pixel shader.
@@ -102,4 +151,52 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 }
 
+// TODO - lol not sure if this will work
+void WheatShader::render(ID3D11DeviceContext* deviceContext, int indexCount, int instanceCount) 
+{
+	deviceContext->IASetInputLayout(layout);
 
+	deviceContext->VSSetShader(vertexShader, NULL, 0);
+	deviceContext->PSSetShader(pixelShader, NULL, 0);
+	deviceContext->CSSetShader(NULL, NULL, 0);
+
+	deviceContext->DrawIndexedInstanced(indexCount, instanceCount, 0, 0, 0);
+}
+
+// render() in 'BaseShader.cpp' for referene
+//// De/Activate shader stages and send shaders to GPU.
+//void BaseShader::render(ID3D11DeviceContext* deviceContext, int indexCount)
+//{
+//	// Set the vertex input layout.
+//	deviceContext->IASetInputLayout(layout);
+//
+//	// Set the vertex and pixel shaders that will be used to render.
+//	deviceContext->VSSetShader(vertexShader, NULL, 0);
+//	deviceContext->PSSetShader(pixelShader, NULL, 0);
+//	deviceContext->CSSetShader(NULL, NULL, 0);
+//
+//	// if Hull shader is not null then set HS and DS
+//	if (hullShader)
+//	{
+//		deviceContext->HSSetShader(hullShader, NULL, 0);
+//		deviceContext->DSSetShader(domainShader, NULL, 0);
+//	}
+//	else
+//	{
+//		deviceContext->HSSetShader(NULL, NULL, 0);
+//		deviceContext->DSSetShader(NULL, NULL, 0);
+//	}
+//
+//	// if geometry shader is not null then set GS
+//	if (geometryShader)
+//	{
+//		deviceContext->GSSetShader(geometryShader, NULL, 0);
+//	}
+//	else
+//	{
+//		deviceContext->GSSetShader(NULL, NULL, 0);
+//	}
+//
+//	// Render the triangle.
+//	deviceContext->DrawIndexed(indexCount, 0, 0);
+//}

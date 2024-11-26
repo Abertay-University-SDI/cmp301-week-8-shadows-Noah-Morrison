@@ -7,6 +7,7 @@
 #include "TextureShader.h"
 #include "ShadowShader.h"
 #include "DepthShader.h"
+#include "WheatShader.h"
 
 class App1 : public BaseApplication
 {
@@ -42,6 +43,11 @@ private:
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
+
+	WheatShader* wheatShader;
+
+	// Instance Controls
+	int instanceCount;
 
 	//ShadowMap* shadowMap;
 	ShadowMap* shadowMaps[NUM_LIGHTS];
