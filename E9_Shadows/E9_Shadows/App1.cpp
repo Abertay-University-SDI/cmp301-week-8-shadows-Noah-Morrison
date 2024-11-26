@@ -263,8 +263,8 @@ void App1::finalPass()
 
 
 	// Render Wheat Instances
-	worldMatrix = renderer->getWorldMatrix();
-	model->sendData(renderer->getDeviceContext());
+	//worldMatrix = renderer->getWorldMatrix();
+	//model->sendData(renderer->getDeviceContext());
 	//wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"), wheatPositions, wheatScales, wheatRotations);
 	//wheatShader->render(renderer->getDeviceContext(), model->getIndexCount(), NUM_WHEAT_CLUMPS);
 
