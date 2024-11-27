@@ -19,6 +19,10 @@ private:
 		XMFLOAT4 rotation;
 	};
 
+	struct InstanceBufferType {
+		InstanceData instances[NUM_WHEAT_CLUMPS];
+	};
+
 public:
 	WheatShader(ID3D11Device* device, HWND hwnd);
 	~WheatShader();
@@ -38,6 +42,9 @@ private:
 	ID3D11SamplerState* sampleState;
 
 	vector<InstanceData> instances;
+
+	D3D11_SUBRESOURCE_DATA initData;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 };
 
 
