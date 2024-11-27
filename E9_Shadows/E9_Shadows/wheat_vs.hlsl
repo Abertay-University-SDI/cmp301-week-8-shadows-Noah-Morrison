@@ -3,6 +3,7 @@
 
 cbuffer MatrixBuffer : register(b0)
 {
+    matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
 };
@@ -24,29 +25,30 @@ StructuredBuffer<InstanceData> InstanceBuffer : register(t0);
 struct VSInput
 {
     float3 position : POSITION;
-    float2 texcoord : TEXCOORD;
+    float2 tex : TEXCOORD;
     uint instanceID : SV_InstanceID;
 };
 
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float2 texcoord : TEXCOORD;
+    float2 tex : TEXCOORD;
 };
 
 VSOutput main(VSInput input)
 {
     VSOutput output;
 
-    InstanceData instance = InstanceBuffer[input.instanceID];
-    //InstanceData instance = instances[input.instanceID];
+    //InstanceData instance = InstanceBuffer[input.instanceID];
+    InstanceData instance = instances[input.instanceID];
 
     float3 worldPosition = (input.position * instance.scale) + instance.position;
 
-    float4 viewPosition = mul(float4(worldPosition, 1.0f), viewMatrix);
-    output.position = mul(viewPosition, projectionMatrix);
+    output.position = mul(float4(worldPosition, 1.0f), worldMatrix);
+    output.position = mul(output.position, viewMatrix);
+    output.position = mul(output.position, projectionMatrix);
 
-    output.texcoord = input.texcoord;
+    output.tex = input.tex;
 
     return output;
 }

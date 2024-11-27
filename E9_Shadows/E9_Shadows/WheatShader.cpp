@@ -65,10 +65,13 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	// Setup the description of the dynamic instance constant buffer that is in the vertex shader.
 	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	instanceBufferDesc.ByteWidth = sizeof(InstanceBufferType);
-	instanceBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	//instanceBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	instanceBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	instanceBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	instanceBufferDesc.StructureByteStride = sizeof(InstanceData);
+	//instanceBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	instanceBufferDesc.MiscFlags = 0;
+	//instanceBufferDesc.StructureByteStride = sizeof(InstanceData);
+	instanceBufferDesc.StructureByteStride = 0;
 
 	// 'initData' stands for 'initial data' -> data can't be initialized when there isn't instance data yet
 	initData = {};
@@ -99,7 +102,7 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	// because 'instanceBuffer' is dynamically updating, -
 	// this function needs to be seen in the render loop - 
 	// so 'instanceBufferSRV' dynamically updates as well.
-	renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
+	//renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -136,7 +139,7 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	// Send matrix data
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
-	dataPtr->world = tworld;// worldMatrix;
+	dataPtr->world = tworld;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
@@ -165,12 +168,11 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	}
 
 	deviceContext->Unmap(instanceBuffer, 0);
-
-	renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
-
 	deviceContext->VSSetConstantBuffers(1, 1, &instanceBuffer);
 
-	deviceContext->VSSetShaderResources(0, 1, &instanceBufferSRV);
+	//renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
+
+	//deviceContext->VSSetShaderResources(0, 1, &instanceBufferSRV);
 
 
 	// Set shader texture and sampler resource in the pixel shader.
