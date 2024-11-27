@@ -70,20 +70,36 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	instanceBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	instanceBufferDesc.StructureByteStride = sizeof(InstanceData);
 
+	// 'initData' stands for 'initial data' -> data can't be initialized when there isn't instance data yet
 	//D3D11_SUBRESOURCE_DATA initData = {}; - TODO
+	// 'pStsMem' is a const void* pointer to the initialization data
+	// .data() documentation: https://cplusplus.com/reference/vector/vector/data/
+	// returns direct pointer to the memory array used to store the vector
 	//initData.pSysMem = instances.data(); - TODO
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
 	//renderer->CreateBuffer(&instanceBufferDesc, &initData, &instanceBuffer); - TODO
-	renderer->CreateBuffer(&instanceBufferDesc, nullptr , &instanceBuffer);
+	//renderer->CreateBuffer(&instanceBufferDesc, nullptr , &instanceBuffer);
+	renderer->CreateBuffer(&instanceBufferDesc, NULL , &instanceBuffer);
+	// Is an issue being caused here because 'nullptr' is being used instead of 'NULL'
+	// nullptr documentation: https://learn.microsoft.com/en-us/cpp/extensions/nullptr-cpp-component-extensions?view=msvc-170
+	// keyword that represents a null pointer value
+	// NULL documentation: https://en.cppreference.com/w/cpp/types/NULL
+	// macro that essentially represents a 0
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	//srvDesc.Buffer.ElementWidth = instances.size(); - TODO
-	srvDesc.Buffer.ElementWidth = sizeof(InstanceData) * NUM_WHEAT_CLUMPS;
+	// ElementWidth is the 'width of each element (in bytes)' - Type: 'UNIT' - An unsigned INT. The range is 0 through 4294967295 decimal.
+	// .size() documentation: https://cplusplus.com/reference/vector/vector/size/
+	// returns the number of elements in the vector
+	srvDesc.Buffer.ElementWidth = sizeof(InstanceData); // Based on documentation - I think this is correct
 
-	renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
+	// because 'instanceBuffer' is dynamically updating, -
+	// this function needs to be seen in the render loop - 
+	// so 'instanceBufferSRV' dynamically updates as well.
+	//renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -140,8 +156,11 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	}
 
 	deviceContext->Map(instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	memcpy(mappedResource.pData, instances.data(), sizeof(InstanceData) * instances.size());
+	memcpy(mappedResource.pData, instances.data(), sizeof(InstanceData) * NUM_WHEAT_CLUMPS);
 	deviceContext->Unmap(instanceBuffer, 0);
+
+	// 'instanceBufferSRV' now dynamically updates
+	renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
 
 	deviceContext->VSSetShaderResources(0, 1, &instanceBufferSRV);
 
@@ -151,7 +170,7 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 }
 
-// TODO - lol not sure if this will work
+// custom render() function since the one from 'BaseShader.cpp' doesn't use the correct draw call to support instance rendering
 void WheatShader::render(ID3D11DeviceContext* deviceContext, int indexCount, int instanceCount) 
 {
 	deviceContext->IASetInputLayout(layout);
