@@ -13,48 +13,60 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Applications">
+      <UniqueIdentifier>{0bc48983-ae8c-488d-ba1e-1d7af6051f98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders">
+      <UniqueIdentifier>{1b0473aa-e55c-4aca-9566-2cf06c6af637}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Applications">
+      <UniqueIdentifier>{8ab60332-c237-419c-a0c5-0962258af3b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Shaders">
+      <UniqueIdentifier>{08d12237-5977-4e31-a7d7-38d9f066ddc4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="App1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WheatApp.cpp">
+      <Filter>Source Files\Applications</Filter>
+    </ClCompile>
+    <ClCompile Include="App1.cpp">
+      <Filter>Source Files\Applications</Filter>
+    </ClCompile>
     <ClCompile Include="DepthShader.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="ShadowShader.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="TextureShader.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="WheatShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WheatApp.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="WheatApp.h">
+      <Filter>Header Files\Applications</Filter>
+    </ClInclude>
     <ClInclude Include="App1.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Applications</Filter>
     </ClInclude>
     <ClInclude Include="DepthShader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="ShadowShader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="TextureShader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="WheatShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WheatApp.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

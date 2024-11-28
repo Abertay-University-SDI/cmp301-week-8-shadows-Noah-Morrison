@@ -1,5 +1,5 @@
 // Define number of clumps - don't like having this defined in two different places
-#define NUM_WHEAT_CLUMPS 3
+#define NUM_WHEAT_CLUMPS 96
 
 cbuffer MatrixBuffer : register(b0)
 {
@@ -50,7 +50,9 @@ VSOutput main(VSInput input)
     float3 worldPosition = (input.position * instance.scale) + instance.position;
     
     // Add wheat sway
-    worldPosition.y += sin(time + input.position.x * 0.1) * 0.1;
+    worldPosition.y += sin(time + input.position.x * 0.1f) * (worldPosition.y * 0.1f);
+    
+    // TODO - add normals
 
     output.position = mul(float4(worldPosition, 1.0f), worldMatrix);
     output.position = mul(output.position, viewMatrix);

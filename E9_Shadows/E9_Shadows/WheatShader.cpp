@@ -158,7 +158,7 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 
 
 	// Send instance data
-	for (size_t i = 0; i < NUM_WHEAT_CLUMPS; ++i) {
+	for (size_t i = 0; i < NUM_WHEAT_CLUMPS; i++) {
 		InstanceData instance;
 		instance.position = positions[i];
 		instance.scale = scales[i];

@@ -3,7 +3,7 @@
 #include "BaseShader.h"
 #include <vector>
 
-#define NUM_WHEAT_CLUMPS 3
+#define NUM_WHEAT_CLUMPS 96
 
 using namespace std;
 using namespace DirectX;

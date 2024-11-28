@@ -53,7 +53,7 @@ private:
 	ShadowMap* shadowMaps[NUM_LIGHTS];
 	ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS];
 
-	float totalTime = 0.0f;
+	float totalTime;
 	float deltaTime;
 	float cubeOffset = 0.0f;
 	float velocity = 5.0f;
