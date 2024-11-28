@@ -29,6 +29,7 @@ private:
 	WheatShader* wheatShader;
 	AModel* wheatModel;
 	AModel* barnModel;
+
 	AModel* postModel;
 
 	bool wheat;
@@ -43,8 +44,13 @@ private:
 	XMMATRIX barnScaleMatrix = XMMatrixScaling(0.16f, 0.16f, 0.16f);
 	XMMATRIX barnRotationMatrix = XMMatrixRotationY(27.0f * 0.0174532f);
 
-	XMMATRIX postScaleMatrix;
-	XMMATRIX postRotationMatrix;
+	// Don't need scale matrices for the posts since their scale is fine as is!
+	XMMATRIX postRotationMatrix[3] = { XMMatrixRotationY(210.0f * 0.0174532f), 
+									   XMMatrixRotationY(20.0f * 0.0174532f), 
+									   XMMatrixRotationY(207.0f * 0.0174532f) };
+
+	XMMATRIX pondScaleMatrix = XMMatrixScaling(0.35f, 0.35f, 0.35f);
+	// Don't need rotation matrix for pond since it's a square mesh whose edge with be covered/given by the surrounding terrian
 
 	// Barn model controls
 	XMFLOAT3 translation = XMFLOAT3(0.0f, 0.0f, 0.0f);
