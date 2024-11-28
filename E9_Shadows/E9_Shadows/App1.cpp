@@ -93,6 +93,18 @@ bool App1::frame()
 	{
 		return false;
 	}
+
+	// Get delta time
+	deltaTime = timer->getTime();
+	totalTime += deltaTime;
+
+	// Animate sphere by offsetting it back and forth on the X-axis
+	if ((cubeOffset + deltaTime) >= 20.f || (cubeOffset + deltaTime <= -20.f))
+	{
+		velocity = -velocity;
+	};
+
+	cubeOffset += deltaTime * velocity;
 	
 	// Render the graphics.
 	result = render();
@@ -106,17 +118,6 @@ bool App1::frame()
 
 bool App1::render()
 {
-	// Get delta time
-	deltaTime = timer->getTime();
-
-	// Animate sphere by offsetting it back and forth on the X-axis
-	if ((cubeOffset + deltaTime) >= 20.f || (cubeOffset + deltaTime <= -20.f))
-	{
-		velocity = -velocity;
-	};
-
-	cubeOffset += deltaTime * velocity;
-
 	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
 	light->setPosition(-lightDirection.x * 30.f, -lightDirection.y * 30.f, -lightDirection.z * 30.f);
 
@@ -265,7 +266,9 @@ void App1::finalPass()
 	// Render Wheat Instances
 	worldMatrix = renderer->getWorldMatrix();
 	model->sendData(renderer->getDeviceContext());
-	wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"), wheatPositions, wheatScales, wheatRotations);
+	wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"),
+									wheatPositions, wheatScales, wheatRotations,
+									totalTime);
 	wheatShader->render(renderer->getDeviceContext(), model->getIndexCount(), NUM_WHEAT_CLUMPS);
 
 	// Render light POV

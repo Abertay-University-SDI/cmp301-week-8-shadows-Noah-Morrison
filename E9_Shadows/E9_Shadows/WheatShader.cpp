@@ -44,6 +44,7 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_BUFFER_DESC instanceBufferDesc;
+	D3D11_BUFFER_DESC timeBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 
 	// Load (+ compile) shader files
@@ -104,6 +105,14 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	// so 'instanceBufferSRV' dynamically updates as well.
 	//renderer->CreateShaderResourceView(instanceBuffer, &srvDesc, &instanceBufferSRV);
 
+	timeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	timeBufferDesc.ByteWidth = sizeof(TimeBufferType);
+	timeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	timeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	timeBufferDesc.MiscFlags = 0;
+	timeBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&timeBufferDesc, NULL, &timeBuffer);
+
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -123,12 +132,14 @@ void WheatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 
 void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, 
 									ID3D11ShaderResourceView* texture,
-									XMFLOAT3 positions[NUM_WHEAT_CLUMPS], XMFLOAT3 scales[NUM_WHEAT_CLUMPS], XMFLOAT4 rotations[NUM_WHEAT_CLUMPS])
+									XMFLOAT3 positions[NUM_WHEAT_CLUMPS], XMFLOAT3 scales[NUM_WHEAT_CLUMPS], XMFLOAT4 rotations[NUM_WHEAT_CLUMPS], 
+									float time)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
 	InstanceBufferType* instancePtr;
+	TimeBufferType* timePtr;
 	XMMATRIX tworld, tview, tproj;
 
 	// Transpose the matrices to prepare them for the shader.
@@ -178,6 +189,14 @@ void WheatShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	// Set shader texture and sampler resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
+
+	// Send time data
+	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	timePtr = (TimeBufferType*)mappedResource.pData;
+	timePtr->time = time;
+	timePtr->padding0 = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	deviceContext->Unmap(timeBuffer, 0);
+	deviceContext->VSSetConstantBuffers(2, 1, &timeBuffer);
 }
 
 // custom render() function since the one from 'BaseShader.cpp' doesn't use the correct draw call to support instance rendering

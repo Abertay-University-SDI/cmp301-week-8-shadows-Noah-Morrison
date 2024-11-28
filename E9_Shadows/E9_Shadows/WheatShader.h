@@ -23,13 +23,20 @@ private:
 		InstanceData instances[NUM_WHEAT_CLUMPS];
 	};
 
+	struct TimeBufferType {
+		float time;
+		XMFLOAT3 padding0;
+	};
+
 public:
 	WheatShader(ID3D11Device* device, HWND hwnd);
 	~WheatShader();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& world, const XMMATRIX& view, const XMMATRIX& projection,
 							ID3D11ShaderResourceView* texture, 
-							XMFLOAT3 positions[NUM_WHEAT_CLUMPS], XMFLOAT3 scales[NUM_WHEAT_CLUMPS], XMFLOAT4 rotations[NUM_WHEAT_CLUMPS]);
+							XMFLOAT3 positions[NUM_WHEAT_CLUMPS], XMFLOAT3 scales[NUM_WHEAT_CLUMPS], XMFLOAT4 rotations[NUM_WHEAT_CLUMPS],
+							float time);
+
 	void render(ID3D11DeviceContext* deviceContext, int indexCount, int instanceCount);
 
 private:
@@ -38,6 +45,7 @@ private:
 private:
 	ID3D11Buffer* matrixBuffer;
 	ID3D11Buffer* instanceBuffer;
+	ID3D11Buffer* timeBuffer;
 	ID3D11ShaderResourceView* instanceBufferSRV;
 	ID3D11SamplerState* sampleState;
 

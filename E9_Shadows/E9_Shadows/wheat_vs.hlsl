@@ -20,6 +20,11 @@ cbuffer InstanceBuffer : register(b1)
     InstanceData instances[NUM_WHEAT_CLUMPS];
 }
 
+cbuffer TimeBuffer : register(b2)
+{
+    float time;
+}
+
 StructuredBuffer<InstanceData> InstanceBuffer : register(t0);
 
 struct VSInput
@@ -43,6 +48,9 @@ VSOutput main(VSInput input)
     InstanceData instance = instances[input.instanceID];
 
     float3 worldPosition = (input.position * instance.scale) + instance.position;
+    
+    // Add wheat sway
+    worldPosition.y += sin(time + input.position.x * 0.1) * 0.1;
 
     output.position = mul(float4(worldPosition, 1.0f), worldMatrix);
     output.position = mul(output.position, viewMatrix);
