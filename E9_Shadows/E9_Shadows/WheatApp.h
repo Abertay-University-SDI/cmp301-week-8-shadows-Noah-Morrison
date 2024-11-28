@@ -29,6 +29,9 @@ private:
 	WheatShader* wheatShader;
 	AModel* wheatModel;
 	AModel* barnModel;
+	AModel* postModel;
+
+	bool wheat;
 
 	XMFLOAT3 wheatPositions[NUM_WHEAT_CLUMPS];
 	XMFLOAT3 wheatScales[NUM_WHEAT_CLUMPS];
@@ -37,11 +40,16 @@ private:
 	float totalTime;
 	float deltaTime;
 
+	XMMATRIX barnScaleMatrix = XMMatrixScaling(0.16f, 0.16f, 0.16f);
+	XMMATRIX barnRotationMatrix = XMMatrixRotationY(27.0f * 0.0174532f);
+
+	XMMATRIX postScaleMatrix;
+	XMMATRIX postRotationMatrix;
+
 	// Barn model controls
-	XMFLOAT3 translation = XMFLOAT3(30.0f, 0.0f, 60.0f);
-	XMFLOAT3 scaling = XMFLOAT3(0.16f, 0.16f, 0.16f);
-	float angle;
-	float rotation;
+	XMFLOAT3 translation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float scaling = 1.0f;
+	float rotation = 0.0f;
 };
 
 #endif

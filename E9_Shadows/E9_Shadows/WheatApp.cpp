@@ -15,10 +15,12 @@ void WheatApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenH
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 	textureMgr->loadTexture(L"wheat", L"res/wheat.png");
 	textureMgr->loadTexture(L"barn", L"res/barn.jpg");
+	textureMgr->loadTexture(L"post", L"res/lamp_post.png");
 
 	// Initialise models
 	wheatModel = new AModel(renderer->getDevice(), "res/wheat.obj");
 	barnModel = new AModel(renderer->getDevice(), "res/barn.obj");
+	postModel = new AModel(renderer->getDevice(), "res/lamp_post_post.obj");
 
 	// Initialise shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -92,23 +94,35 @@ void WheatApp::finalPass()
 	textureShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render wheat clumps
-	wheatModel->sendData(renderer->getDeviceContext());
-	wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"wheat"),
-		wheatPositions, wheatScales, wheatRotations,
-		totalTime);
-	wheatShader->render(renderer->getDeviceContext(), wheatModel->getIndexCount(), NUM_WHEAT_CLUMPS);
+	if (wheat) 
+	{
+		wheatModel->sendData(renderer->getDeviceContext());
+		wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+			textureMgr->getTexture(L"wheat"),
+			wheatPositions, wheatScales, wheatRotations,
+			totalTime);
+		wheatShader->render(renderer->getDeviceContext(), wheatModel->getIndexCount(), NUM_WHEAT_CLUMPS);
+	}
 
 	// Render barn
 	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(translation.x / scaling.x, translation.y / scaling.y, translation.z / scaling.z);
-	XMMATRIX scaleMatrix = XMMatrixScaling(scaling.x, scaling.y, scaling.z);
-	XMMATRIX rotationMatrix = XMMatrixRotationY(rotation);
-	worldMatrix = XMMatrixMultiply(worldMatrix, rotationMatrix);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+	worldMatrix = XMMatrixTranslation(27.5f / 0.16f, 0.0f, 85.0f / 0.16f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, barnRotationMatrix);
+	worldMatrix = XMMatrixMultiply(worldMatrix, barnScaleMatrix);
 	barnModel->sendData(renderer->getDeviceContext());
 	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"barn"));
 	textureShader->render(renderer->getDeviceContext(), barnModel->getIndexCount());
+
+	// Render lamppost
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(translation.x / scaling, translation.y / scaling, translation.z / scaling);
+	postScaleMatrix = XMMatrixScaling(scaling, scaling, scaling);
+	postRotationMatrix = XMMatrixRotationY(rotation * 0.0174532f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix);
+	worldMatrix = XMMatrixMultiply(worldMatrix, postScaleMatrix);
+	postModel->sendData(renderer->getDeviceContext());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"post"));
+	textureShader->render(renderer->getDeviceContext(), postModel->getIndexCount());
 
 	gui();
 	renderer->endScene();
@@ -126,22 +140,21 @@ void WheatApp::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+	
+	// Wheat Toggle
+	ImGui::Checkbox("Wheat", &wheat);
 
-	// Barn Model Controls
-	ImGui::Text("Barn Transation:");
+	// Model Controls
+	ImGui::Text("Translation:");
 	ImGui::SliderFloat("X##Translation", &translation.x, -100.0f, 100.0f);
 	ImGui::SliderFloat("Y##Translation", &translation.y, -100.0f, 100.0f);
 	ImGui::SliderFloat("Z##Translation", &translation.z, -100.0f, 100.0f);
 
-	ImGui::Text("Barn Scaling:");
-	ImGui::SliderFloat("X##Scaling", &scaling.x, 0.0f, 1.0f);
-	ImGui::SliderFloat("Y##Scaling", &scaling.y, 0.0f, 1.0f);
-	ImGui::SliderFloat("Z##Scaling", &scaling.z, 0.0f, 1.0f);
+	ImGui::Text("Scaling:");
+	ImGui::SliderFloat("Model##Scaling", &scaling, 0.0f, 1.0f);
 
-	ImGui::Text("Barn Rotation:");
-	ImGui::SliderFloat("Y##Rotation", &angle, 0.0f, 360.0f);
-
-	rotation = angle * 0.0174532f;
+	ImGui::Text("Rotation:");
+	ImGui::SliderFloat("Y##Rotation", &rotation, 0.0f, 360.0f);
 
 	// Render UI
 	ImGui::Render();
