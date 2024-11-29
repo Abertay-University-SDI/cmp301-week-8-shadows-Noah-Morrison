@@ -46,9 +46,6 @@ private:
 
 	WheatShader* wheatShader;
 
-	// Instance Controls
-	int instanceCount;
-
 	//ShadowMap* shadowMap;
 	ShadowMap* shadowMaps[NUM_LIGHTS];
 	ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS];

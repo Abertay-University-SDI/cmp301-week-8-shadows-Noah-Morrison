@@ -1,5 +1,5 @@
 // Define number of clumps - don't like having this defined in two different places
-#define NUM_WHEAT_CLUMPS 1080
+#define MAX_WHEAT_CLUMPS 1365 // Maximum constant buffer size is 4096 16 byte entries - each case of instance data is 3 entires. 4096 / 3 = 1365.333... => 1365
 
 cbuffer MatrixBuffer : register(b0)
 {
@@ -17,7 +17,7 @@ struct InstanceData
 
 cbuffer InstanceBuffer : register(b1)
 {
-    InstanceData instances[NUM_WHEAT_CLUMPS];
+    InstanceData instances[MAX_WHEAT_CLUMPS];
 }
 
 cbuffer TimeBuffer : register(b2)
@@ -31,6 +31,7 @@ struct VSInput
 {
     float3 position : POSITION;
     float2 tex : TEXCOORD;
+    float3 normal : NORMAL;
     uint instanceID : SV_InstanceID;
 };
 

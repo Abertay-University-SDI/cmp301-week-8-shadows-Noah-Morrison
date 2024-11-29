@@ -301,9 +301,6 @@ void App1::gui()
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
 
-	// Instance Count Controls
-	ImGui::SliderInt("Instance Count", &instanceCount, 1, 10);
-
 	// Directional Light Controls
 	if (ImGui::CollapsingHeader("Light Direction")) {
 		ImGui::Text("Angle Values:");

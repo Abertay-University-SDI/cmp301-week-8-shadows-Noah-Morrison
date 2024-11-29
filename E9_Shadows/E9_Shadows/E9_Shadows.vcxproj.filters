@@ -48,6 +48,9 @@
     <ClCompile Include="WheatShader.cpp">
       <Filter>Source Files\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="PointLightApp.cpp">
+      <Filter>Source Files\Applications</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WheatApp.h">
@@ -67,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="WheatShader.h">
       <Filter>Header Files\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLightApp.h">
+      <Filter>Header Files\Applications</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

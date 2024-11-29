@@ -28,6 +28,16 @@ void WheatApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenH
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
 	wheatShader = new WheatShader(renderer->getDevice(), hwnd);
 
+	for (int y = 0; y < 40; y++)
+	{
+		for (int x = 0; x < 27; x++)
+		{
+			wheatPositions[(y * 27) + x] = XMFLOAT3(2.4f + (x * 3.6f), 0.0f, 1.5f + (y * 2.4f));
+			wheatScales[(y * 27) + x] = XMFLOAT3(0.3f, 0.3f, 0.3f);
+			wheatRotations[(y * 27) + x] = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
+
 }
 
 WheatApp::~WheatApp()
@@ -53,16 +63,6 @@ bool WheatApp::frame()
 	// Get delta + total time
 	deltaTime = timer->getTime();
 	totalTime += deltaTime;
-
-	for (int y = 0; y < 40; y++)
-	{
-		for (int x = 0; x < 27; x++)
-		{
-			wheatPositions[(y * 27) + x] = XMFLOAT3(2.4f + (x * 3.6f), 0.0f, 1.5f + (y * 2.4f));
-			wheatScales[(y * 27) + x] = XMFLOAT3(0.3f, 0.3f, 0.3f);
-			wheatRotations[(y * 27) + x] = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-		}
-	}
 
 	// Render the graphics.
 	result = render();
@@ -181,9 +181,3 @@ void WheatApp::gui()
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-// Utility functions
-
-void lamppost()
-{
-
-}

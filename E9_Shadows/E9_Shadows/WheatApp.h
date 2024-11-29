@@ -21,7 +21,6 @@ public:
 
 protected:
 	bool render();
-	void lamppost();
 	void finalPass();
 	void gui();
 

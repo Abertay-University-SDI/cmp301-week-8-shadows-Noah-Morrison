@@ -166,6 +166,7 @@
     <ClCompile Include="App1.cpp" />
     <ClCompile Include="DepthShader.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PointLightApp.cpp" />
     <ClCompile Include="ShadowShader.cpp" />
     <ClCompile Include="TextureShader.cpp" />
     <ClCompile Include="WheatApp.cpp" />
@@ -174,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="App1.h" />
     <ClInclude Include="DepthShader.h" />
+    <ClInclude Include="PointLightApp.h" />
     <ClInclude Include="ShadowShader.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="WheatApp.h" />
