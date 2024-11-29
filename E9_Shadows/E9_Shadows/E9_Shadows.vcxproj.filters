@@ -51,6 +51,9 @@
     <ClCompile Include="PointLightApp.cpp">
       <Filter>Source Files\Applications</Filter>
     </ClCompile>
+    <ClCompile Include="LightShader.cpp">
+      <Filter>Source Files\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WheatApp.h">
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="PointLightApp.h">
       <Filter>Header Files\Applications</Filter>
+    </ClInclude>
+    <ClInclude Include="LightShader.h">
+      <Filter>Header Files\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -98,6 +104,12 @@
       <Filter>Resource Files</Filter>
     </FxCompile>
     <FxCompile Include="wheat_ps.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="light_vs.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="light_ps.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>
