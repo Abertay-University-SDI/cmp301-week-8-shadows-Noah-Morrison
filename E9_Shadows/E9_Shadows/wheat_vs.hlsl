@@ -1,5 +1,5 @@
 // Define number of clumps - don't like having this defined in two different places
-#define NUM_WHEAT_CLUMPS 96
+#define NUM_WHEAT_CLUMPS 1080
 
 cbuffer MatrixBuffer : register(b0)
 {

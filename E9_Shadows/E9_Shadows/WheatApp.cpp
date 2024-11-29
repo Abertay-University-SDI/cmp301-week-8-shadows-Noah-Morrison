@@ -22,6 +22,7 @@ void WheatApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenH
 	barnModel = new AModel(renderer->getDevice(), "res/barn.obj");
 
 	postModel = new AModel(renderer->getDevice(), "res/lamp_post_post.obj");
+	lampMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	// Initialise shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -53,13 +54,13 @@ bool WheatApp::frame()
 	deltaTime = timer->getTime();
 	totalTime += deltaTime;
 
-	for (int y = 0; y < 12; y++)
+	for (int y = 0; y < 40; y++)
 	{
-		for (int x = 0; x < 8; x++)
+		for (int x = 0; x < 27; x++)
 		{
-			wheatPositions[(y * 8) + x] = XMFLOAT3(8.0f + (x * 12.0f), 0.0f, 5.0f + (y * 8.0f));
-			wheatScales[(y * 8) + x] = XMFLOAT3(1.0f, 1.0f, 1.0f);
-			wheatRotations[(y * 8) + x] = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+			wheatPositions[(y * 27) + x] = XMFLOAT3(2.4f + (x * 3.6f), 0.0f, 1.5f + (y * 2.4f));
+			wheatScales[(y * 27) + x] = XMFLOAT3(0.3f, 0.3f, 0.3f);
+			wheatRotations[(y * 27) + x] = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 	}
 
@@ -122,30 +123,26 @@ void WheatApp::finalPass()
 	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"barn"));
 	textureShader->render(renderer->getDeviceContext(), barnModel->getIndexCount());
 
-	// Render red lamppost
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-26.0f, 1.5f, -68.0f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix[0]);
-	postModel->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"post"));
-	textureShader->render(renderer->getDeviceContext(), postModel->getIndexCount());
+	// Render lampposts
+	for (int i = 0; i < NUM_LAMPPOSTS; i++)
+	{
+		// Render lamppost
+		worldMatrix = renderer->getWorldMatrix();
+		worldMatrix = XMMatrixTranslation(postTranslations[i].x, postTranslations[i].y, postTranslations[i].z);
+		worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix[i]);
+		postModel->sendData(renderer->getDeviceContext());
+		textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"post"));
+		textureShader->render(renderer->getDeviceContext(), postModel->getIndexCount());
 
-	// Render green lamppost
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-1.5f, 1.5f, 45.0f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix[1]);
-	postModel->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"post"));
-	textureShader->render(renderer->getDeviceContext(), postModel->getIndexCount());
-
-	// Render blue lampost
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-37.5, 1.5f, -37.5);
-	worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix[2]);
-	postModel->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"post"));
-	textureShader->render(renderer->getDeviceContext(), postModel->getIndexCount());
-
+		// Render lamp
+		worldMatrix = renderer->getWorldMatrix();
+		worldMatrix = XMMatrixTranslation((postTranslations[i].x + lampOffset.x) / lampScale, (postTranslations[i].y + lampOffset.y) / lampScale, (postTranslations[i].z + lampOffset.z) / lampScale);
+		worldMatrix = XMMatrixMultiply(worldMatrix, lampScaleMatrix);
+		worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix[i]);
+		lampMesh->sendData(renderer->getDeviceContext());
+		textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"));
+		textureShader->render(renderer->getDeviceContext(), lampMesh->getIndexCount());
+	}
 
 	gui();
 	renderer->endScene();
@@ -169,9 +166,9 @@ void WheatApp::gui()
 
 	// Model Controls
 	ImGui::Text("Translation:");
-	ImGui::SliderFloat("X##Translation", &translation.x, -100.0f, 100.0f);
-	ImGui::SliderFloat("Y##Translation", &translation.y, -100.0f, 100.0f);
-	ImGui::SliderFloat("Z##Translation", &translation.z, -100.0f, 100.0f);
+	ImGui::SliderFloat("X##Translation", &translation.x, -10.0f, 10.0f);
+	ImGui::SliderFloat("Y##Translation", &translation.y, -10.0f, 10.0f);
+	ImGui::SliderFloat("Z##Translation", &translation.z, -10.0f, 10.0f);
 
 	ImGui::Text("Scaling:");
 	ImGui::SliderFloat("##Scaling", &scaling, 0.0f, 1.0f);
@@ -182,4 +179,11 @@ void WheatApp::gui()
 	// Render UI
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+// Utility functions
+
+void lamppost()
+{
+
 }
