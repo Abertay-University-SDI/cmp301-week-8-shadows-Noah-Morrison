@@ -1,3 +1,5 @@
+// REFERENCE - https://github.com/TheRealMJP/MSAAFilter/blob/master/SampleFramework11/v1.01/Shaders/Skybox.hlsl
+
 #include "SkyboxShader.h"
 
 SkyboxShader::SkyboxShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
@@ -69,6 +71,112 @@ void SkyboxShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 
 }
 
+// Override vertex and pixel shader functions from base class for more experimentation and control
+void SkyboxShader::loadVertexShader(const wchar_t* filename)
+{
+	ID3DBlob* vertexShaderBuffer;
+
+	unsigned int numElements;
+
+	vertexShaderBuffer = 0;
+
+	// check file extension for correct loading function.
+	std::wstring fn(filename);
+	std::string::size_type idx;
+	std::wstring extension;
+
+	idx = fn.rfind('.');
+
+	if (idx != std::string::npos)
+	{
+		extension = fn.substr(idx + 1);
+	}
+	else
+	{
+		// No extension found
+		MessageBox(hwnd, L"Error finding vertex shader file", L"ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Load the texture in.
+	if (extension != L"cso")
+	{
+		MessageBox(hwnd, L"Incorrect vertex shader file type", L"ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Reads compiled shader into buffer (bytecode).
+	HRESULT result = D3DReadFileToBlob(filename, &vertexShaderBuffer);
+	if (result != S_OK)
+	{
+		MessageBox(NULL, filename, L"File ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Create the vertex shader from the buffer.
+	renderer->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &vertexShader);
+
+	// Create the vertex input layout description.
+	// This setup needs to match the VertexType stucture in the MeshClass and in the shader.
+	D3D11_INPUT_ELEMENT_DESC polygonLayout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	// Get a count of the elements in the layout.
+	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
+
+	// Create the vertex input layout.
+	renderer->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &layout);
+
+	// Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
+	vertexShaderBuffer->Release();
+	vertexShaderBuffer = 0;
+}
+
+void SkyboxShader::loadPixelShader(const wchar_t* filename)
+{
+	ID3DBlob* pixelShaderBuffer;
+
+	// check file extension for correct loading function.
+	std::wstring fn(filename);
+	std::string::size_type idx;
+	std::wstring extension;
+
+	idx = fn.rfind('.');
+
+	if (idx != std::string::npos)
+	{
+		extension = fn.substr(idx + 1);
+	}
+	else
+	{
+		// No extension found
+		MessageBox(hwnd, L"Error finding pixel shader file", L"ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Load the texture in.
+	if (extension != L"cso")
+	{
+		MessageBox(hwnd, L"Incorrect pixel shader file type", L"ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Reads compiled shader into buffer (bytecode).
+	HRESULT result = D3DReadFileToBlob(filename, &pixelShaderBuffer);
+	if (result != S_OK)
+	{
+		MessageBox(NULL, filename, L"File not found", MB_OK);
+		exit(0);
+	}
+	// Create the pixel shader from the buffer.
+	renderer->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &pixelShader);
+
+	pixelShaderBuffer->Release();
+	pixelShaderBuffer = 0;
+}
 
 void SkyboxShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture)
 {

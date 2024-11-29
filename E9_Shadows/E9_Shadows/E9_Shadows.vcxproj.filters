@@ -25,6 +25,12 @@
     <Filter Include="Header Files\Shaders">
       <UniqueIdentifier>{08d12237-5977-4e31-a7d7-38d9f066ddc4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Vertex Shaders">
+      <UniqueIdentifier>{8a84eb16-afc5-4dea-95a9-e70329701679}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Pixel Shaders">
+      <UniqueIdentifier>{36bbbaa8-d112-4052-ab15-6273f6ce1f0a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -54,6 +60,9 @@
     <ClCompile Include="LightShader.cpp">
       <Filter>Source Files\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="SkyboxShader.cpp">
+      <Filter>Source Files\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WheatApp.h">
@@ -80,37 +89,46 @@
     <ClInclude Include="LightShader.h">
       <Filter>Header Files\Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="SkyboxShader.h">
+      <Filter>Header Files\Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders\depth_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
     <FxCompile Include="shaders\depth_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\shadow_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\shadow_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\texture_ps.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\texture_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="wheat_vs.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="wheat_ps.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Vertex Shaders</Filter>
     </FxCompile>
     <FxCompile Include="light_vs.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Vertex Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\shadow_vs.hlsl">
+      <Filter>Resource Files\Vertex Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="skybox_vs.hlsl">
+      <Filter>Resource Files\Vertex Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\texture_vs.hlsl">
+      <Filter>Resource Files\Vertex Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="wheat_vs.hlsl">
+      <Filter>Resource Files\Vertex Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\depth_ps.hlsl">
+      <Filter>Resource Files\Pixel Shaders</Filter>
     </FxCompile>
     <FxCompile Include="light_ps.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Pixel Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\shadow_ps.hlsl">
+      <Filter>Resource Files\Pixel Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="skybox_ps.hlsl">
+      <Filter>Resource Files\Pixel Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\texture_ps.hlsl">
+      <Filter>Resource Files\Pixel Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="wheat_ps.hlsl">
+      <Filter>Resource Files\Pixel Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

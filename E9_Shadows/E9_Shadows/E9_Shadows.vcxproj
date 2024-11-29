@@ -169,6 +169,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="PointLightApp.cpp" />
     <ClCompile Include="ShadowShader.cpp" />
+    <ClCompile Include="SkyboxShader.cpp" />
     <ClCompile Include="TextureShader.cpp" />
     <ClCompile Include="WheatApp.cpp" />
     <ClCompile Include="WheatShader.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="LightShader.h" />
     <ClInclude Include="PointLightApp.h" />
     <ClInclude Include="ShadowShader.h" />
+    <ClInclude Include="SkyboxShader.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="WheatApp.h" />
     <ClInclude Include="WheatShader.h" />
@@ -224,6 +226,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="skybox_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="skybox_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="wheat_ps.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
