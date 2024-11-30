@@ -1,4 +1,5 @@
 // REFERENCE - https://github.com/TheRealMJP/MSAAFilter/blob/master/SampleFramework11/v1.01/Shaders/Skybox.hlsl
+// TODO - Leave until after you have working point light & tesselation
 
 #include "SkyboxShader.h"
 

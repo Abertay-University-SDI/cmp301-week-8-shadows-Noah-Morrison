@@ -37,7 +37,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	int sceneHeight = 200;
 
 	// This is your shadow map
-	//shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
+	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	shadowMaps[0] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 	shadowMaps[1] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
@@ -47,7 +47,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(),  200, 200, -screenWidth / 2.7, screenHeight / 2.7);
 
 	// Light render texture
-	//lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
+	lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
 
 	// Configure directional light
 	light = new Light();
@@ -60,14 +60,16 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	lights[0] = new Light();
 	lights[0]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
 	lights[0]->setDirection(1.0f, -1.0f, 0.0f);
-	lights[0]->setPosition(-30.0f, 30.0f, 0.0f);
+	lights[0]->setPosition(position.x, position.y, position.z);
 	lights[0]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	lights[0]->generateProjectionMatrix(0.1f, 100.f);
 
 	lights[1] = new Light();
 	lights[1]->setDiffuseColour(0.0f, 1.0f, 0.0f, 1.0f);
 	lights[1]->setDirection(-1.0f, -1.0f, 0.0f);
 	lights[1]->setPosition(30.0f, 30.0f, 0.0f);
 	lights[1]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	lights[1]->generateProjectionMatrix(0.1f, 100.f);
 
 
 	// TODO - implement projection matrix to create frustum
@@ -105,6 +107,8 @@ bool App1::frame()
 	};
 
 	cubeOffset += deltaTime * velocity;
+
+	lights[0]->setPosition(position.x, position.y, position.z);
 	
 	// Render the graphics.
 	result = render();
@@ -126,6 +130,8 @@ bool App1::render()
 	{
 		depthPass(i);
 	}
+
+	//depthPass2();
 	// Render scene
 	finalPass();
 
@@ -140,7 +146,65 @@ void App1::depthPass(int index)
 	// get the world, view, and projection matrices from the camera and d3d objects.
 	lights[index]->generateViewMatrix();
 	XMMATRIX lightViewMatrix = lights[index]->getViewMatrix();
-	XMMATRIX lightProjectionMatrix = lights[index]->getOrthoMatrix();
+	lightProjectionMatrix = lights[index]->getOrthoMatrix();
+	if (matrixToggle) {
+		lightProjectionMatrix = lights[index]->getProjectionMatrix();
+	}
+	//XMMATRIX lightProjectionMatrix = lights[index]->getOrthoMatrix();
+	// TODO - implement projection matrix to create frustum
+	//XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
+	XMMATRIX worldMatrix = renderer->getWorldMatrix();
+
+	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
+	// Render floor
+	planeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
+	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
+	// Render model
+	model->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), model->getIndexCount());
+
+	// Add cube
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(cubeOffset, 7.f, 10.f);
+	// Render cube
+	cubeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+
+	// Add triangle
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
+	// Render triangle - TODO - Fix issue where shadow displays as an outline and not filled - May be a light and not model error
+	triangleMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
+
+	// Set back buffer as render target and reset view port.
+	renderer->setBackBufferRenderTarget();
+	renderer->resetViewport();
+}
+
+void App1::depthPass2()
+{
+	// Set the render target to be the render to texture.
+	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
+
+	// get the world, view, and projection matrices from the camera and d3d objects.
+	light->generateViewMatrix();
+	XMMATRIX lightViewMatrix = light->getViewMatrix();
+	lightProjectionMatrix = light->getOrthoMatrix();
+	if (matrixToggle) {
+		light->generateProjectionMatrix(SCREEN_NEAR, SCREEN_DEPTH);
+		lightProjectionMatrix = light->getProjectionMatrix();
+	}
+	//XMMATRIX lightProjectionMatrix = lights[index]->getOrthoMatrix();
 	// TODO - implement projection matrix to create frustum
 	//XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
@@ -200,6 +264,8 @@ void App1::finalPass()
 		depthMaps[i] = shadowMaps[i]->getDepthMapSRV();
 	}
 
+	//depthMaps[0] = shadowMap->getDepthMapSRV();
+
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 	// Render floor
 	planeMesh->sendData(renderer->getDeviceContext());
@@ -243,6 +309,17 @@ void App1::finalPass()
 	//setAmbientAndDiffuse(light, { 0.3f, 0.3f, 0.3f }, { 1.0f, 1.0f, 1.0f });
 	//shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
+	// Render spheres at light positions
+	XMFLOAT3 lightPosition;
+	for (int i = 0; i < NUM_LIGHTS; i++) {
+		worldMatrix = renderer->getWorldMatrix();
+		lightPosition = lights[i]->getPosition();
+		worldMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
+		sphereMesh->sendData(renderer->getDeviceContext());
+		textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"checkerboard"));
+		textureShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+	}
+
 
 	XMFLOAT3 wheatPositions[NUM_WHEAT_CLUMPS] = {
 		XMFLOAT3(10.0f, 0.0f, 5.0f),
@@ -264,12 +341,12 @@ void App1::finalPass()
 
 
 	// Render Wheat Instances
-	worldMatrix = renderer->getWorldMatrix();
-	model->sendData(renderer->getDeviceContext());
-	wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"),
-									wheatPositions, wheatScales, wheatRotations,
-									totalTime);
-	wheatShader->render(renderer->getDeviceContext(), model->getIndexCount(), NUM_WHEAT_CLUMPS);
+	//worldMatrix = renderer->getWorldMatrix();
+	//model->sendData(renderer->getDeviceContext());
+	//wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"),
+	//								wheatPositions, wheatScales, wheatRotations,
+	//								totalTime);
+	//wheatShader->render(renderer->getDeviceContext(), model->getIndexCount(), NUM_WHEAT_CLUMPS);
 
 	// Render light POV
 	renderer->setZBuffer(false);
@@ -288,8 +365,6 @@ void App1::finalPass()
 	renderer->endScene();
 }
 
-
-
 void App1::gui()
 {
 	// Force turn off unnecessary shader stages.
@@ -300,6 +375,15 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+
+	// Matrix toggle for light depth maps
+	ImGui::Checkbox("Projection Matrix", &matrixToggle);
+
+	// Debug Light Controls
+	ImGui::Text("Red Light Position:");
+	ImGui::SliderFloat("X##Position", &position.x, -100.0f, 100.0f);
+	ImGui::SliderFloat("Y##Position", &position.y, -100.0f, 100.0f);
+	ImGui::SliderFloat("Z##Position", &position.z, -100.0f, 100.0f);
 
 	// Directional Light Controls
 	if (ImGui::CollapsingHeader("Light Direction")) {

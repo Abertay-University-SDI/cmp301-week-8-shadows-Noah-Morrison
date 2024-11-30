@@ -29,6 +29,7 @@ struct OutputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
 	float3 normal : NORMAL;
+    
     float4 lightViewPos[NUM_LIGHTS] : TEXCOORD1;
 };
 

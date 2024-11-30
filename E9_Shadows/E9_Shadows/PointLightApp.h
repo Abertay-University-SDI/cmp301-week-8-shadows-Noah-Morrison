@@ -1,4 +1,4 @@
-// Application.h
+// PointLightApp.h
 #ifndef _POINTLIGHTAPP_H
 #define _POINTLIGHTAPP_H
 

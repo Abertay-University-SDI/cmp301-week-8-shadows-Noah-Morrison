@@ -16,7 +16,7 @@ struct InputType
 float4 main(InputType input) : SV_TARGET
 {
 	// Sample the pixel color from the texture using the sampler at this texture coordinate location.
-    //return texture0.Sample(Sampler0, input.tex);
+    return texture0.Sample(Sampler0, input.tex);
 	
 	// TEMP - Using texutre shader as light source debug shader - setting all colour to white
     return float4(1.0f, 1.0f, 1.0f, 1.0f);

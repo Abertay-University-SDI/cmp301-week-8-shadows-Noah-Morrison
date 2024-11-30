@@ -18,10 +18,12 @@ public:
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
 
 	bool frame();
+	bool matrixToggle;
 
 protected:
 	bool render();
 	void depthPass(int index);
+	void depthPass2();
 	void finalPass();
 	void gui();
 
@@ -46,7 +48,7 @@ private:
 
 	WheatShader* wheatShader;
 
-	//ShadowMap* shadowMap;
+	ShadowMap* shadowMap;
 	ShadowMap* shadowMaps[NUM_LIGHTS];
 	ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS];
 
@@ -65,6 +67,9 @@ private:
 
 	XMFLOAT4 ambient;
 	Light* lights[NUM_LIGHTS];
+
+	XMMATRIX lightProjectionMatrix;
+	XMFLOAT3 position = XMFLOAT3(-30.0f, 30.0f, 0.0f);
 };
 
 #endif

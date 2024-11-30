@@ -1,3 +1,8 @@
+// Define light types
+#define LIGHT_TYPE_DIRECTIONAL 0
+#define LIGHT_TYPE_POINT 1
+#define LIGHT_TYPE_SPOT 2
+
 // Define number of lights
 #define NUM_LIGHTS 2
 
@@ -13,6 +18,7 @@ struct Light
     float4 diffuse;
     float3 position;
     float3 direction;
+    float type;
 };
 
 // Old
@@ -37,8 +43,46 @@ struct InputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
 	float3 normal : NORMAL;
+    
     float4 lightViewPos[NUM_LIGHTS] : TEXCOORD1;
 };
+
+float4 calculateDirectional(float3 lightDirection, float3 normal, float4 diffuse)
+{
+    float intensity = saturate(dot(normal, lightDirection));
+    float4 colour = diffuse * intensity;
+    return colour;
+}
+
+float4 calculatePoint(float3 lightPosition, float3 normal, float4 diffuse, float3 worldPosition)
+{
+    float3 direction = normalize(lightPosition - worldPosition);
+    float intensity = saturate(dot(normal, direction));
+    float4 colour = diffuse * intensity;
+    return colour;
+}
+
+float4 calculateSpot(
+float3 position, float3 normal, float4 diffuse, float3 direction, float coneAngle, float3 attenuationVector, float3 worldPosition)
+{
+    float3 lightVector = normalize(position - worldPosition);
+    float distance = length(lightVector);
+    float spotEffect = saturate(dot(lightVector, direction));
+    float coneEffect = cos(coneAngle);
+    
+    float intensity = 0.0f;
+    if (spotEffect >= coneEffect)
+    {
+        float intensity = saturate(dot(normal, lightVector));
+        
+        float attenuation = 1.0 / (attenuationVector.x + attenuationVector.y * distance + attenuationVector.z * distance * distance);
+        
+        intensity = intensity * attenuation * spotEffect;
+    }
+    
+    float4 colour = saturate(diffuse * intensity);
+    return colour;
+}
 
 // Calculate lighting intensity based on direction and normal. Combine with light colour.
 float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
@@ -47,6 +91,25 @@ float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
     float intensity = saturate(dot(normal, lightDirection));
     float4 colour = saturate(diffuse * intensity);
     return colour;
+}
+
+float4 calculateMultipleLighting(Light light, float3 normal, float3 worldPosition)
+{
+    float4 result = float4(0.0, 0.0, 0.0, 0.0);
+    
+    switch (light.type)
+    {
+        case LIGHT_TYPE_DIRECTIONAL:
+            result = calculateDirectional(-light.direction, normal, light.diffuse);
+            break;
+        case LIGHT_TYPE_POINT:
+            result = calculatePoint(light.position, normal, light.diffuse, worldPosition);
+            break;
+        case LIGHT_TYPE_SPOT:
+            //result = calculateSpot(light.position, normal, light.diffuse, light.direction, light.cone, light.attenuation, worldPosition);
+            break;
+    }
+    return result;
 }
 
 // Is the gemoetry in our shadow map
@@ -86,7 +149,7 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float shadowMapBias = 0.005f;
+    float shadowMapBias = 0.001f;
     float4 colour = float4(0.f, 0.f, 0.f, 0.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 	
@@ -102,8 +165,9 @@ float4 main(InputType input) : SV_TARGET
             if (!isInShadow(depthMapTexture[i], pTexCoord, input.lightViewPos[i], shadowMapBias))
             {
         // is NOT in shadow, therefore light
-                colour += calculateLighting(-lights[i].direction, input.normal, lights[i].diffuse);
-            }
+                //colour += calculateLighting(-lights[i].direction, input.normal, lights[i].diffuse);
+                colour += calculateMultipleLighting(lights[i], input.normal, input.lightViewPos[i].xyz);
+        }
         //}
     }
     

@@ -9,7 +9,7 @@ using namespace std;
 using namespace DirectX;
 
 // Define number of lights
-#define NUM_LIGHTS 2
+#define NUM_LIGHTS 1
 
 class ShadowShader : public BaseShader
 {
@@ -26,9 +26,9 @@ private:
 		// Generic variables
 		XMFLOAT4 diffuse;
 		XMFLOAT3 position;
-		float padding1;
+		float padding;
 		XMFLOAT3 direction;
-		float padding2;
+		int type;
 	};
 
 	struct MatrixBufferType

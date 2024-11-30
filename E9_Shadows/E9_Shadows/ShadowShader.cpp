@@ -118,6 +118,7 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < NUM_LIGHTS; i++) 
 	{
 		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
+		//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getProjectionMatrix());
 		XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
 
 		dataPtr->lightMatrices[i].lightView = tLightViewMatrix;
@@ -150,8 +151,9 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	{
 		lightPtr->lights[i].diffuse = lights[i]->getDiffuseColour();
 		lightPtr->lights[i].position = lights[i]->getPosition();
-		lightPtr->lights[i].padding1 = 0.0f;
+		lightPtr->lights[i].padding = 0.0f;
 		lightPtr->lights[i].direction = lights[i]->getDirection();
+		lightPtr->lights[i].type = 0;
 	}
 
 	deviceContext->Unmap(lightBuffer, 0);
