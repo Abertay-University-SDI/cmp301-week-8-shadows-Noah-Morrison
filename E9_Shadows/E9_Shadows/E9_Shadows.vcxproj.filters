@@ -63,6 +63,9 @@
     <ClCompile Include="SkyboxShader.cpp">
       <Filter>Source Files\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="PointShader.cpp">
+      <Filter>Source Files\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WheatApp.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="SkyboxShader.h">
+      <Filter>Header Files\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="PointShader.h">
       <Filter>Header Files\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -129,6 +135,12 @@
     </FxCompile>
     <FxCompile Include="wheat_ps.hlsl">
       <Filter>Resource Files\Pixel Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="point_ps.hlsl">
+      <Filter>Resource Files\Pixel Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="point_vs.hlsl">
+      <Filter>Resource Files\Vertex Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

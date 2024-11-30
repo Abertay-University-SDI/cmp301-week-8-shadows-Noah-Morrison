@@ -13,11 +13,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
 	// Create the system object.
 	// Lab Application
-	system = new System(app, 1200, 675, true, false);
+	//system = new System(app, 1200, 675, true, false);
 	// Wheat Field Position Calculator
 	//system = new System(wheatApp, 1200, 675, true, false);
 	// Point Light Cube Map Application
-	//system = new System(pointLightApp, 1200, 675, true, false);
+	system = new System(pointLightApp, 1200, 675, true, false);
 
 	// Initialize and run the system object.
 	system->run();

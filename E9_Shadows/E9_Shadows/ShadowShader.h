@@ -9,7 +9,7 @@ using namespace std;
 using namespace DirectX;
 
 // Define number of lights
-#define NUM_LIGHTS 1
+#define NUM_LIGHTS 2
 
 class ShadowShader : public BaseShader
 {

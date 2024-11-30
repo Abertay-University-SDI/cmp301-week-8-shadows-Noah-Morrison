@@ -1,14 +1,13 @@
-// texture shader.cpp
-#include "shadowshader.h"
+#include "PointShader.h"
 
 
-ShadowShader::ShadowShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
+PointShader::PointShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"shadow_vs.cso", L"shadow_ps.cso");
+	initShader(L"point_vs.cso", L"point_ps.cso");
 }
 
 
-ShadowShader::~ShadowShader()
+PointShader::~PointShader()
 {
 	if (sampleState)
 	{
@@ -26,7 +25,7 @@ ShadowShader::~ShadowShader()
 		layout = 0;
 	}
 	if (lightBuffer)
-	{	
+	{
 		lightBuffer->Release();
 		lightBuffer = 0;
 	}
@@ -36,7 +35,7 @@ ShadowShader::~ShadowShader()
 }
 
 
-void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
+void PointShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
@@ -94,32 +93,26 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS])
+void PointShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS])
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
 	LightBufferType* lightPtr;
-	
-	// Transpose the matrices to prepare them for the shader.
+
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
 
-	// TODO - implement projection matrix to create frustum
-	//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
-	
-	// Lock the constant buffer so it can be written to.
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld;// worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
 
-	for (int i = 0; i < NUM_LIGHTS; i++) 
+	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
 		XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getProjectionMatrix());
-		//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
 
 		dataPtr->lightMatrices[i].lightView = tLightViewMatrix;
 		dataPtr->lightMatrices[i].lightProjection = tLightProjectionMatrix;
@@ -128,22 +121,9 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	//Additional
-	// Send light data to pixel shader
+
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
-
-	//// Old
-	//lightPtr->ambient = light->getAmbientColour();
-	//lightPtr->diffuse = light->getDiffuseColour();
-	//lightPtr->direction = light->getDirection();
-	//lightPtr->padding1 = 0.f;
-	//lightPtr->position = light->getPosition();
-	//lightPtr->padding2 = 0.0f;
-	//deviceContext->Unmap(lightBuffer, 0);
-	//deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
-
-	// New
 	lightPtr->ambient = ambient;
 
 	// Prep light data

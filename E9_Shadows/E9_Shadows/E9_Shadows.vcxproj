@@ -168,6 +168,7 @@
     <ClCompile Include="LightShader.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="PointLightApp.cpp" />
+    <ClCompile Include="PointShader.cpp" />
     <ClCompile Include="ShadowShader.cpp" />
     <ClCompile Include="SkyboxShader.cpp" />
     <ClCompile Include="TextureShader.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="DepthShader.h" />
     <ClInclude Include="LightShader.h" />
     <ClInclude Include="PointLightApp.h" />
+    <ClInclude Include="PointShader.h" />
     <ClInclude Include="ShadowShader.h" />
     <ClInclude Include="SkyboxShader.h" />
     <ClInclude Include="TextureShader.h" />
@@ -195,6 +197,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="light_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="point_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="point_vs.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="shaders\depth_ps.hlsl">
