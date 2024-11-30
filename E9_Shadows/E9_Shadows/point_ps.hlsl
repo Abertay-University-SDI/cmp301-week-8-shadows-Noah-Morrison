@@ -48,8 +48,8 @@ float4 calculatePoint(float3 lightPosition, float3 normal, float4 diffuse, float
     //float intensity = saturate(dot(normal, direction));
     float intensity = 0.0f;
     
-    float spotEffect = saturate(dot(direction, lightDirection));
-    float coneEffect = cos(45);
+    float spotEffect = dot(direction, lightDirection);
+    float coneEffect = cos(radians(45));
     
     if (spotEffect >= coneEffect)
     {
