@@ -12,7 +12,9 @@ void PointLightApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int sc
 
 	// Create Mesh object and shader object
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
+	cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
+	textureMgr->loadTexture(L"checkerboard", L"res/checkerboard.png");
 
 	// Initialise mesh objects for lamppost
 	postModel = new AModel(renderer->getDevice(), "res/lamp_post_post.obj");
@@ -39,27 +41,27 @@ void PointLightApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int sc
 	lights[0]->setPosition(0.0f, 0.0f, 0.0f); // Position dynamically updates with lamp
 
 	lights[1] = new Light();
-	lights[1]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[1]->setDiffuseColour(0.0f, 1.0f, 0.0f, 1.0f);
 	lights[1]->setDirection(1.0f, 0.0f, 0.0f);
 	lights[1]->setPosition(0.0f, 0.0f, 0.0f); // Position dynamically updates with lamp
 
 	lights[2] = new Light();
-	lights[2]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[2]->setDiffuseColour(0.0f, 0.0f, 1.0f, 1.0f);
 	lights[2]->setDirection(0.0f, -1.0f, 0.0f);
 	lights[2]->setPosition(0.0f, 0.0f, 0.0f); // Position dynamically updates with lamp
 
 	lights[3] = new Light();
-	lights[3]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[3]->setDiffuseColour(1.0f, 1.0f, 0.0f, 1.0f);
 	lights[3]->setDirection(0.0f, 1.0f, 0.0f);
 	lights[3]->setPosition(0.0f, 0.0f, 0.0f); // Position dynamically updates with lamp
 
 	lights[4] = new Light();
-	lights[4]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[4]->setDiffuseColour(1.0f, 0.0f, 1.0f, 1.0f);
 	lights[4]->setDirection(0.0f, 0.0f, -1.0f);
 	lights[4]->setPosition(0.0f, 0.0f, 0.0f); // Position dynamically updates with lamp
 
 	lights[5] = new Light();
-	lights[5]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[5]->setDiffuseColour(0.0f, 1.0f, 1.0f, 1.0f);
 	lights[5]->setDirection(0.0f, 0.0f, 1.0f);
 	lights[5]->setPosition(0.0f, 0.0f, 0.0f); // Position dynamically updates with lamp
 }
@@ -123,8 +125,8 @@ void PointLightApp::depthPass(int index)
 	XMMATRIX lightViewMatrix = lights[index]->getViewMatrix();
 	XMMATRIX lightProjectionMatrix = lights[index]->getProjectionMatrix();
 
-	worldMatrix = renderer->getWorldMatrix();
 	// Render Plane
+	worldMatrix = renderer->getWorldMatrix();
 	planeMesh->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
@@ -137,6 +139,14 @@ void PointLightApp::depthPass(int index)
 	postModel->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), postModel->getIndexCount());
+
+	// Render cube
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixMultiply(worldMatrix, XMMatrixTranslation(translationC.x / scalingC, translationC.y / scalingC, translationC.z / scalingC));
+	worldMatrix = XMMatrixMultiply(worldMatrix, XMMatrixScaling(scalingC, scalingC, scalingC));
+	cubeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -184,6 +194,15 @@ void PointLightApp::finalPass()
 	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"));
 	textureShader->render(renderer->getDeviceContext(), lampMesh->getIndexCount());
 
+	// Render cube
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix = XMMatrixMultiply(worldMatrix, XMMatrixTranslation(translationC.x / scalingC, translationC.y / scalingC, translationC.z / scalingC));
+	worldMatrix = XMMatrixMultiply(worldMatrix, XMMatrixScaling(scalingC, scalingC, scalingC));
+	cubeMesh->sendData(renderer->getDeviceContext());
+	pointShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+		textureMgr->getTexture(L"checkerboard"), depthMaps, ambient, lights);
+	pointShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+
 	gui();
 	renderer->endScene();
 }
@@ -202,13 +221,23 @@ void PointLightApp::gui()
 	// Model Controls
 	if (ImGui::CollapsingHeader("Lamppost Controls")) {
 		ImGui::Text("Translation:");
-		ImGui::SliderFloat("X##Translation0", &translation.x, -100.0f, 100.0f);
-		ImGui::SliderFloat("Y##Translation0", &translation.y, -100.0f, 100.0f);
-		ImGui::SliderFloat("Z##Translation0", &translation.z, -100.0f, 100.0f);
+		ImGui::SliderFloat("X##TranslationL", &translation.x, -100.0f, 100.0f);
+		ImGui::SliderFloat("Y##TranslationL", &translation.y, -100.0f, 100.0f);
+		ImGui::SliderFloat("Z##TranslationL", &translation.z, -100.0f, 100.0f);
 
 		ImGui::Text("Scaling:");
-		ImGui::SliderFloat("Post##Scaling", &scaling[0], 0.0f, 5.0f);
-		ImGui::SliderFloat("Lamp##Scaling", &scaling[1], 0.0f, 5.0f);
+		ImGui::SliderFloat("Post##ScalingL", &scaling[0], 0.0f, 5.0f);
+		ImGui::SliderFloat("Lamp##ScalingL", &scaling[1], 0.0f, 5.0f);
+	}
+
+	if (ImGui::CollapsingHeader("Cube Controls")) {
+		ImGui::Text("Translation:");
+		ImGui::SliderFloat("X##TranslationS", &translationC.x, -100.0f, 100.0f);
+		ImGui::SliderFloat("Y##TranslationS", &translationC.y, -100.0f, 100.0f);
+		ImGui::SliderFloat("Z##TranslationS", &translationC.z, -100.0f, 100.0f);
+
+		ImGui::Text("Scaling:");
+		ImGui::SliderFloat("##ScalingS", &scalingC, 1.0f, 10.0f);
 	}
 
 	// Render UI

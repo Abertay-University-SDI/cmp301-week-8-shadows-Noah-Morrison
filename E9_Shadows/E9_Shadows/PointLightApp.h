@@ -31,6 +31,7 @@ private:
 	PointShader* pointShader;
 
 	PlaneMesh* planeMesh;
+	CubeMesh* cubeMesh;
 
 	AModel* postModel;
 	SphereMesh* lampMesh;
@@ -40,8 +41,11 @@ private:
 
 	// Model Controls
 	XMFLOAT3 translation = XMFLOAT3(30.0f, 7.0f, 50.0f);
-
 	float scaling[2] = { 5.0f, 2.5f };
+
+	// Square Controls
+	XMFLOAT3 translationC = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float scalingC = 1.0f;
 
 	XMFLOAT3 lampOffset = XMFLOAT3(3.5f, 4.9f, 0.0f);
 

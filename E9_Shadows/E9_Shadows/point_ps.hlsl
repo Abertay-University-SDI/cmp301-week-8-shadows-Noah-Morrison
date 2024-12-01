@@ -48,13 +48,41 @@ float4 calculatePoint(float3 lightPosition, float3 normal, float4 diffuse, float
     //float intensity = saturate(dot(normal, direction));
     float intensity = 0.0f;
     
-    float spotEffect = dot(direction, lightDirection);
+    //float spotEffect = dot(direction, lightDirection);
+    
+    float spotEffect[3] = { dot(normalize(direction.xy), lightDirection.xy),
+                            dot(normalize(direction.zy), lightDirection.zy),
+                            dot(normalize(direction.xz), lightDirection.xz)
+    };
+    
     float coneEffect = cos(radians(45));
     
-    if (spotEffect >= coneEffect)
+    if (lightDirection.x == 0.0f && lightDirection.z == 0.0f)
     {
-        intensity = saturate(dot(normal, direction));
+        if (spotEffect[0] >= coneEffect && spotEffect[1] >= coneEffect)
+        {
+            intensity = saturate(dot(normal, direction));
+        }
     }
+    else if (lightDirection.x == 0.0f && lightDirection.y == 0.0f)
+    {
+        if (spotEffect[1] >= coneEffect && spotEffect[2] >= coneEffect)
+        {
+            intensity = saturate(dot(normal, direction));
+        }
+    }
+    else if (lightDirection.z == 0.0f && lightDirection.y == 0.0f)
+    {
+        if (spotEffect[0] >= coneEffect && spotEffect[2] >= coneEffect)
+        {
+            intensity = saturate(dot(normal, direction));
+        }
+    }
+    
+    //if (spotEffect >= coneEffect)
+    //{
+    //    intensity = saturate(dot(normal, direction));
+    //}
     
     float4 colour = diffuse * intensity;
     return colour;
@@ -143,7 +171,7 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float shadowMapBias = 0.001f;
+    float shadowMapBias = 0.0001f;
     float4 colour = float4(0.f, 0.f, 0.f, 0.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 	
