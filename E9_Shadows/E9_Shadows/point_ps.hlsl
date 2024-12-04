@@ -2,7 +2,7 @@
 #define LIGHT_TYPE_POINT 1
 #define LIGHT_TYPE_SPOT 2
 
-#define NUM_LIGHTS 6
+#define NUM_LIGHTS 19
 
 Texture2D shaderTexture : register(t0);
 Texture2D pointDepthMapTexture[NUM_LIGHTS] : register(t1);
@@ -21,6 +21,7 @@ struct Light
 cbuffer LightBuffer : register(b0)
 {
     float4 ambient;
+    float3 attenuationVector;
     
     Light lights[NUM_LIGHTS];
 };
@@ -45,6 +46,9 @@ float4 calculateDirectional(float3 lightDirection, float3 normal, float4 diffuse
 float4 calculatePoint(float3 lightPosition, float3 normal, float4 diffuse, float3 worldPosition, float3 lightDirection)
 {
     float3 direction = normalize(lightPosition - worldPosition);
+    
+    float distance = length(lightPosition - worldPosition);
+    float attenuation;
     //float intensity = saturate(dot(normal, direction));
     float intensity = 0.0f;
     
@@ -61,21 +65,28 @@ float4 calculatePoint(float3 lightPosition, float3 normal, float4 diffuse, float
     {
         if (spotEffect[0] >= coneEffect && spotEffect[1] >= coneEffect)
         {
+            attenuation = 1.0 / (attenuationVector.x + attenuationVector.y * distance + attenuationVector.z * distance * distance);
             intensity = saturate(dot(normal, direction));
+            intensity = intensity * attenuation;
         }
     }
     else if (lightDirection.x == 0.0f && lightDirection.y == 0.0f)
     {
         if (spotEffect[1] >= coneEffect && spotEffect[2] >= coneEffect)
         {
+            attenuation = 1.0 / (attenuationVector.x + attenuationVector.y * distance + attenuationVector.z * distance * distance);
             intensity = saturate(dot(normal, direction));
+            intensity = intensity * attenuation;
         }
     }
     else if (lightDirection.z == 0.0f && lightDirection.y == 0.0f)
     {
         if (spotEffect[0] >= coneEffect && spotEffect[2] >= coneEffect)
         {
+            attenuation = 1.0 / (attenuationVector.x + attenuationVector.y * distance + attenuationVector.z * distance * distance);
             intensity = saturate(dot(normal, direction));
+            intensity = intensity * attenuation;
+
         }
     }
     
@@ -186,5 +197,6 @@ float4 main(InputType input) : SV_TARGET
     }
    
     colour += ambient;
-    return saturate(colour * textureColour);
+    colour = saturate(colour);
+    return colour * textureColour;
 }

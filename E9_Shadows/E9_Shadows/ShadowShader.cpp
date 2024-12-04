@@ -94,7 +94,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS])
+void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS], bool matrixToggle)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -118,8 +118,14 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < NUM_LIGHTS; i++) 
 	{
 		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
-		XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getProjectionMatrix());
-		//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
+		XMMATRIX tLightProjectionMatrix;
+		if (matrixToggle) {
+			tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getProjectionMatrix());
+		}
+		else {
+			tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
+		}
+		
 
 		dataPtr->lightMatrices[i].lightView = tLightViewMatrix;
 		dataPtr->lightMatrices[i].lightProjection = tLightProjectionMatrix;
@@ -153,9 +159,11 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 		lightPtr->lights[i].position = lights[i]->getPosition();
 		lightPtr->lights[i].padding = 0.0f;
 		lightPtr->lights[i].direction = lights[i]->getDirection();
-		//lightPtr->lights[i].type = 0; // Directional Light
-		lightPtr->lights[i].type = 1; // Point Light
-		//lightPtr->lights[i].type = 2; // Spotlight Light
+		lightPtr->lights[i].type = 0; // Directional Light
+		if (matrixToggle)
+		{
+			lightPtr->lights[i].type = 1; // Point Light
+		}
 	}
 
 	deviceContext->Unmap(lightBuffer, 0);

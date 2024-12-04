@@ -9,7 +9,7 @@ using namespace std;
 using namespace DirectX;
 
 // Define number of lights
-#define NUM_LIGHTS 2
+#define NUM_LIGHTS 3
 
 class ShadowShader : public BaseShader
 {
@@ -64,7 +64,7 @@ public:
 	ShadowShader(ID3D11Device* device, HWND hwnd);
 	~ShadowShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS]);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS], bool matrixToggle);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);

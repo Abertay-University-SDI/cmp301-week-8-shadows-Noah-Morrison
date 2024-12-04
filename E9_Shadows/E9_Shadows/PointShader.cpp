@@ -93,7 +93,7 @@ void PointShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 }
 
 
-void PointShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS])
+void PointShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS], XMFLOAT4 ambient, Light* lights[NUM_LIGHTS], XMFLOAT3 attenuation, int types[NUM_LIGHTS])
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -111,8 +111,16 @@ void PointShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
-		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
-		XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getProjectionMatrix());
+		XMMATRIX tLightViewMatrix, tLightProjectionMatrix;
+
+		tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
+
+		if (types[i] == 1) {
+			tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getProjectionMatrix());
+		}
+		else {
+			tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
+		}
 
 		dataPtr->lightMatrices[i].lightView = tLightViewMatrix;
 		dataPtr->lightMatrices[i].lightProjection = tLightProjectionMatrix;
@@ -125,6 +133,8 @@ void PointShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
 	lightPtr->ambient = ambient;
+	lightPtr->attenuation = attenuation;
+	lightPtr->padding = 0.0f;
 
 	// Prep light data
 	for (int i = 0; i < NUM_LIGHTS; i++)
@@ -134,7 +144,7 @@ void PointShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const 
 		lightPtr->lights[i].padding = 0.0f;
 		lightPtr->lights[i].direction = lights[i]->getDirection();
 		//lightPtr->lights[i].type = 0; // Directional Light
-		lightPtr->lights[i].type = 1; // Point Light
+		lightPtr->lights[i].type = types[i]; // Point Light
 		//lightPtr->lights[i].type = 2; // Spotlight Light
 	}
 

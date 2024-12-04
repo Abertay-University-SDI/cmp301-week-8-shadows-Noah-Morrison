@@ -4,7 +4,7 @@
 #define LIGHT_TYPE_SPOT 2
 
 // Define number of lights
-#define NUM_LIGHTS 2
+#define NUM_LIGHTS 3
 
 Texture2D shaderTexture : register(t0);
 Texture2D directionalDepthMapTexture[NUM_LIGHTS] : register(t1);
@@ -151,7 +151,7 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float shadowMapBias = 0.001f;
+    float shadowMapBias = 0.005f;
     float4 colour = float4(0.f, 0.f, 0.f, 0.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 	
@@ -186,5 +186,7 @@ float4 main(InputType input) : SV_TARGET
     //return saturate(totalLightContribution * textureColour);
    
     colour += ambient;
-    return saturate(colour * textureColour);
+    colour = saturate(colour);
+    //return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    return colour * textureColour;
 }

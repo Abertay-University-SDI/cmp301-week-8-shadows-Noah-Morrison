@@ -1,4 +1,4 @@
-#define NUM_LIGHTS 6
+#define NUM_LIGHTS 19
 
 struct LightMatrices
 {

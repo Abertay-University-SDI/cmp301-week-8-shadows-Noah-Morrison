@@ -16,6 +16,7 @@ void WheatApp::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenH
 	textureMgr->loadTexture(L"wheat", L"res/wheat.png");
 	textureMgr->loadTexture(L"barn", L"res/barn.jpg");
 	textureMgr->loadTexture(L"post", L"res/lamp_post.png");
+	textureMgr->loadTexture(L"checkerboard", L"res/checkerboard.png");
 
 	// Initialise models
 	wheatModel = new AModel(renderer->getDevice(), "res/wheat.obj");
@@ -111,7 +112,7 @@ void WheatApp::finalPass()
 	worldMatrix = XMMatrixTranslation(60.0f / 0.35f, 0.1f / 0.35f, 4.0f / 0.35f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, pondScaleMatrix);
 	planeMesh->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"post"));
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"checkerboard"));
 	textureShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render barn
@@ -140,7 +141,7 @@ void WheatApp::finalPass()
 		worldMatrix = XMMatrixMultiply(worldMatrix, lampScaleMatrix);
 		worldMatrix = XMMatrixMultiply(worldMatrix, postRotationMatrix[i]);
 		lampMesh->sendData(renderer->getDeviceContext());
-		textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"));
+		textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"checkerboard"));
 		textureShader->render(renderer->getDeviceContext(), lampMesh->getIndexCount());
 	}
 

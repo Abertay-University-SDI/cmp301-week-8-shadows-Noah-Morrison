@@ -10,6 +10,17 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Call super/parent init function (required!)
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
 
+	// Initialise key colours
+	keyColours = {
+	{0.0f, {0.0f, 0.0f, 0.5f, 1.0f}},   // Midnight (Navy Blue)
+	{6.0f, {0.0f, 0.0f, 0.5f, 1.0f}},   // Early morning (Navy Blue)
+	{6.5f, {1.0f, 0.447f, 0.435f, 1.0f}}, // Sunrise (Sunset Pink)
+	{7.0f, {0.165f, 0.322f, 0.745f, 1.0f}}, // Daytime (Cerulean)
+	{17.0f, {0.165f, 0.322f, 0.745f, 1.0f}}, // Daytime (Cerulean)
+	{17.5f, {1.0f, 0.388f, 0.278f, 1.0f}}, // Sunset (Sunset Orange)
+	{18.0f, {0.0f, 0.0f, 0.5f, 1.0f}}    // Midnight again
+	};
+
 	// Create Mesh object and shader object
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	model = new AModel(renderer->getDevice(), "res/wheat.obj");
@@ -36,11 +47,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	int sceneWidth = 200;
 	int sceneHeight = 200;
 
-	// This is your shadow map
-	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
-
 	shadowMaps[0] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 	shadowMaps[1] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
+	shadowMaps[2] = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Ortho mesh to view light POV
 	//orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), 512, 512, -screenWidth / 1.3, screenHeight / 1.8);
@@ -50,30 +59,27 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	lightTexture = new RenderTexture(renderer->getDevice(), shadowmapWidth, shadowmapHeight, SCREEN_NEAR, SCREEN_DEPTH);
 
 	// Configure directional light
-	light = new Light();
-	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
-	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
-	light->setPosition(-lightDirection.x * 10.f, -lightDirection.y * 10.f, -lightDirection.z * 10.f);
-	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
 	lights[0] = new Light();
-	lights[0]->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f);
+	lights[0]->setDiffuseColour(0.3f, 0.0f, 0.0f, 1.0f);
 	lights[0]->setDirection(1.0f, -1.0f, 0.0f);
 	lights[0]->setPosition(position.x, position.y, position.z);
 	lights[0]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 	lights[0]->generateProjectionMatrix(0.1f, 100.f);
 
 	lights[1] = new Light();
-	lights[1]->setDiffuseColour(0.0f, 1.0f, 0.0f, 1.0f);
+	lights[1]->setDiffuseColour(0.0f, 0.3f, 0.0f, 1.0f);
 	lights[1]->setDirection(-1.0f, -1.0f, 0.0f);
 	lights[1]->setPosition(30.0f, 30.0f, 0.0f);
 	lights[1]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 	lights[1]->generateProjectionMatrix(0.1f, 100.f);
 
-
-	// TODO - implement projection matrix to create frustum
-	//light->generateProjectionMatrix(0.1f, 100.f);
+	lights[2] = new Light();
+	lights[2]->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
+	lights[2]->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
+	lights[2]->setPosition(-lightDirection.x * 10.f, -lightDirection.y * 10.f, -lightDirection.z * 10.f);
+	lights[2]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	lights[2]->generateProjectionMatrix(0.1f, 100.f);
 }
 
 App1::~App1()
@@ -122,15 +128,14 @@ bool App1::frame()
 
 bool App1::render()
 {
-	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
-	light->setPosition(-lightDirection.x * 30.f, -lightDirection.y * 30.f, -lightDirection.z * 30.f);
+	lights[2]->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
+	lights[2]->setPosition(-lightDirection.x * 30.f, -lightDirection.y * 30.f, -lightDirection.z * 30.f);
 
 	// Perform depth passes
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		depthPass(i);
 	}
-
 	//depthPass2();
 	// Render scene
 	finalPass();
@@ -162,9 +167,6 @@ void App1::depthPass(int index)
 	depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
-	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 	// Render model
 	model->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
@@ -177,14 +179,6 @@ void App1::depthPass(int index)
 	cubeMesh->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
-
-	// Add triangle
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
-	// Render triangle - TODO - Fix issue where shadow displays as an outline and not filled - May be a light and not model error
-	triangleMesh->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -194,19 +188,16 @@ void App1::depthPass(int index)
 void App1::depthPass2()
 {
 	// Set the render target to be the render to texture.
-	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
+	shadowMaps[2]->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 	// get the world, view, and projection matrices from the camera and d3d objects.
-	light->generateViewMatrix();
-	XMMATRIX lightViewMatrix = light->getViewMatrix();
-	lightProjectionMatrix = light->getOrthoMatrix();
+	lights[2]->generateViewMatrix();
+	XMMATRIX lightViewMatrix = lights[2]->getViewMatrix();
+	lightProjectionMatrix = lights[2]->getOrthoMatrix();
 	if (matrixToggle) {
-		light->generateProjectionMatrix(SCREEN_NEAR, SCREEN_DEPTH);
-		lightProjectionMatrix = light->getProjectionMatrix();
+		lights[2]->generateProjectionMatrix(SCREEN_NEAR, SCREEN_DEPTH);
+		lightProjectionMatrix = lights[2]->getProjectionMatrix();
 	}
-	//XMMATRIX lightProjectionMatrix = lights[index]->getOrthoMatrix();
-	// TODO - implement projection matrix to create frustum
-	//XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
@@ -216,9 +207,6 @@ void App1::depthPass2()
 	depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
-	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 	// Render model
 	model->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
@@ -232,14 +220,6 @@ void App1::depthPass2()
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
-	// Add triangle
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
-	// Render triangle - TODO - Fix issue where shadow displays as an outline and not filled - May be a light and not model error
-	triangleMesh->sendData(renderer->getDeviceContext());
-	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
-
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
 	renderer->resetViewport();
@@ -247,12 +227,15 @@ void App1::depthPass2()
 
 void App1::finalPass()
 {
-	// Clear the scene. (default blue colour)
-	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
+	XMFLOAT4 currentColor = calculateBackground(fractionalHours, keyColours);
+	renderer->beginScene(currentColor.x, currentColor.y, currentColor.z, currentColor.w);
+	ambient = currentColor;
+
+	//renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
 	camera->update();
 
 	// Set ambient colour (light grey)
-	ambient = { 0.3f, 0.3f, 0.3f, 1.0f };
+	//ambient = { 0.3f, 0.3f, 0.3f, 1.0f };
 
 	// get the world, view, projection, and ortho matrices from the camera and Direct3D objects.
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
@@ -270,17 +253,14 @@ void App1::finalPass()
 	// Render floor
 	planeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights, matrixToggle);
 	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render model
 	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(0.f, 7.f, 5.f);
-	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, scaleMatrix);
 	model->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights, matrixToggle);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube
@@ -288,25 +268,15 @@ void App1::finalPass()
 	worldMatrix = XMMatrixTranslation(cubeOffset, 7.f, 10.f);
 	cubeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
+		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights, matrixToggle);
 	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
-
-	// Render triangle
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix = XMMatrixTranslation(-20.f, 10.f, 5.f);
-	triangleMesh->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"brick"), depthMaps, ambient, lights);
-	shadowShader->render(renderer->getDeviceContext(), triangleMesh->getIndexCount());
 
 	// Render sphere (light position) // TODO - Add back after multiple lights and shadow maps implemented
 	//worldMatrix = renderer->getWorldMatrix();
 	//worldMatrix = XMMatrixTranslation(-lightDirection.x * 30.f , -lightDirection.y * 30.f, -lightDirection.z * 30.f);
 	//sphereMesh->sendData(renderer->getDeviceContext());
-	//setAmbientAndDiffuse(light, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f });
 	//shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-	//	textureMgr->getTexture(L"checkerboard"), shadowMap->getDepthMapSRV(), light);
-	//setAmbientAndDiffuse(light, { 0.3f, 0.3f, 0.3f }, { 1.0f, 1.0f, 1.0f });
+	//	textureMgr->getTexture(L"checkerboard"), depthMaps, ambient, lights, matrixToggle);
 	//shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Render spheres at light positions
@@ -338,15 +308,6 @@ void App1::finalPass()
 		XMFLOAT4(0.707f, 0.0f, 0.707f, 0.0f),
 		XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f)
 	};
-
-
-	// Render Wheat Instances
-	//worldMatrix = renderer->getWorldMatrix();
-	//model->sendData(renderer->getDeviceContext());
-	//wheatShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"wheat"),
-	//								wheatPositions, wheatScales, wheatRotations,
-	//								totalTime);
-	//wheatShader->render(renderer->getDeviceContext(), model->getIndexCount(), NUM_WHEAT_CLUMPS);
 
 	// Render light POV
 	renderer->setZBuffer(false);
@@ -406,9 +367,11 @@ void App1::gui()
 	if (ImGui::CollapsingHeader("Time")) {
 		ImGui::Text("Time Values:");
 		ImGui::SliderInt("Hours##Direction", &hours, 0, 24);
-		ImGui::SliderInt("Minutes##Direction", &minutes, 0, 60);
+		ImGui::SliderInt("Minutes##Direction", &minutes, 0, 59);
 
-		if (minutes == 60) {
+		fractionalHours = static_cast<float>(hours) + static_cast<float>(minutes) / 60.0f;
+
+		if (minutes == 59) {
 			minutes = 0;
 			delay += 1;
 		}
@@ -440,3 +403,26 @@ void App1::setAmbientAndDiffuse(Light* light, XMFLOAT3 ambient, XMFLOAT3 diffuse
 	light->setDiffuseColour(diffuse.x, diffuse.y, diffuse.z, 1.0f);
 }
 
+XMFLOAT4 App1::lerpColour(const XMFLOAT4& colourA, const XMFLOAT4& colourB, float t)
+{
+	return {
+		colourA.x + t * (colourB.x - colourA.x),
+		colourA.y + t * (colourB.y - colourA.y),
+		colourA.z + t * (colourB.z - colourA.z),
+		colourA.w + t * (colourB.w - colourA.w)
+	};
+}
+
+XMFLOAT4 App1::calculateBackground(float hours, std::vector<App1::TimeColour> keyColours)
+{
+	for (size_t i = 0; i < keyColours.size() - 1; ++i) {
+		const App1::TimeColour& start = keyColours[i];
+		const App1::TimeColour& end = keyColours[i + 1];
+
+		if (start.time <= hours && hours <= end.time) {
+			float t = (hours - start.time) / (end.time - start.time); // Normalize time
+			return lerpColour(start.colour, end.colour, t);
+		}
+	}
+	return keyColours.back().colour; // Default to the last color if out of range
+}

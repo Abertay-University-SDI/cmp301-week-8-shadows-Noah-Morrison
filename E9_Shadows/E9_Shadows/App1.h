@@ -12,7 +12,6 @@
 class App1 : public BaseApplication
 {
 public:
-
 	App1();
 	~App1();
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
@@ -20,8 +19,19 @@ public:
 	bool frame();
 	bool matrixToggle;
 
+	struct TimeColour {
+
+		float time;
+		XMFLOAT4 colour;
+
+	};
+
 protected:
 	bool render();
+
+	XMFLOAT4 calculateBackground(float time, std::vector<TimeColour> keyColours);
+	XMFLOAT4 lerpColour(const XMFLOAT4& colourA, const XMFLOAT4& colourB, float t);
+
 	void depthPass(int index);
 	void depthPass2();
 	void finalPass();
@@ -41,14 +51,12 @@ private:
 	OrthoMesh* orthoMesh;
 	RenderTexture* lightTexture;
 
-	Light* light;
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 
 	WheatShader* wheatShader;
 
-	ShadowMap* shadowMap;
 	ShadowMap* shadowMaps[NUM_LIGHTS];
 	ID3D11ShaderResourceView* depthMaps[NUM_LIGHTS];
 
@@ -65,11 +73,15 @@ private:
 	int minutes = 0;
 	int delay = 0;
 
+	float fractionalHours = 0.0f;
+
 	XMFLOAT4 ambient;
 	Light* lights[NUM_LIGHTS];
 
 	XMMATRIX lightProjectionMatrix;
 	XMFLOAT3 position = XMFLOAT3(-30.0f, 30.0f, 0.0f);
+
+	std::vector<TimeColour> keyColours;
 };
 
 #endif
